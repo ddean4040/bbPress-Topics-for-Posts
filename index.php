@@ -3,9 +3,12 @@
 /**
 Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.jerseyconnect.net/development/bbpress-post-topics
-Description: Give authors the option to create bbPress topics for posts
+Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.1
+Version: 0.2
+Revision Date: 09/16/2011
+Requires at least: WP 3.0, bbPress 2.0-rc1
+Tested up to: WP 3.2.1 , bbPress 2.0-rc5
 Author URI: http://www.generalthreat.com/
 */
 
@@ -25,17 +28,20 @@ class BBP_PostTopics {
 			$bbpress_topic_slug = $bbpress_topic->post_name;
 		}
 		
-		echo $bbpress_topic_status;
+		$forums = bbp_has_forums();
 		
+		if(!$forums) {
+			?><br /><p><?php _e('bbPress Topics for Posts has been enabled, but you have not created any forums yet.','bbpress-post-topics'); ?></p><?php
+			return; 
+		} 
 		?>
 		<br />
-		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic_status" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status, 'true'); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', '' ); ?></label><br />
+		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic_status" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status, 'true'); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
 		<div id="bbpress_topic_status_options" style="display: <?php echo checked($bbpress_topic_status, 'true', false) ? 'block' : 'none' ?>;">
-			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:','') ?> </label> <input type="text" name="bbpress_topic_slug" id="bbpress_topic_slug" value="<?php echo $bbpress_topic_slug ?>" />
-			  - OR - <label for="bbpress_topic_forum"><?php _e('Create a new topic in forum:',''); ?></label>
-			<?php bbp_has_forums(); ?>
+			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic_slug" id="bbpress_topic_slug" value="<?php echo $bbpress_topic_slug ?>" />
+			  - OR - <label for="bbpress_topic_forum"><?php _e('Create a new topic in forum:', 'bbpress-post-topics' ); ?></label>
 			<select name="bbpress_topic_forum" id="bbpress_topic_forum">
-				<option value="0" selected><?php _e('Select a Forum',''); ?></option>
+				<option value="0" selected><?php _e('Select a Forum', 'bbpress-post-topics' ); ?></option>
 				<?php while ( bbp_forums() ) : bbp_the_forum(); ?>
 					<?php if(bbp_is_forum_category())	continue; ?>
 					<option value="<?php echo bbp_get_forum_id() ?>"><?php echo bbp_get_forum_title(); ?></option>
@@ -76,8 +82,6 @@ class BBP_PostTopics {
 			return;			
 		}
 
-		if(!function_exists('bbp_forums'))	return;
-
 
 		/**
 		 * The user requested to use a bbPress topic for discussion
@@ -90,23 +94,26 @@ class BBP_PostTopics {
 			if($topic_slug != '') {
 				/** if user has selected an existing topic */
 				
-//				echo 'Using existing topic: ' . $topic_slug . "<br />\n";
-				$topic = get_page_by_path($topic_slug, OBJECT, bbp_get_topic_post_type());
+				if(is_numeric($topic_slug)) {
+					$topic = bbp_get_topic( (int)$topic_slug );
+				} else {
+					$topic = bbppt_get_topic_by_slug( $topic_slug );
+				}
+				
 				if($topic == null) {
 					// return an error of some kind
-//					die('there was an error selecting the existing topic');
+					die('there was an error selecting the existing topic');
 				} else {
 					$topic_ID = $topic->ID;
 					update_post_meta($post_ID, 'use_bbpress_discussion_topic','true');
-					update_post_meta($post_ID, 'bbpress_discussion_topic_id',$topic_ID);
-//					echo 'Setting post meta: bbpress_discussion_topic to: ' . $topic_ID . ' for post ID: ' . $post_ID . "<br />\n";
+					update_post_meta($post_ID, 'bbpress_discussion_topic_id', $topic_ID );
 				}
 				
 			} else if($topic_forum != 0) {
 				/** if user has opted to create a new topic */
 				
 				$topic_content = ($post->post_excerpt != '') ? apply_filters('the_excerpt', $post->post_excerpt) : bbppt_post_discussion_get_the_content($post->post_content, 25) ;
-				$topic_content .= sprintf( __('[See the full post at: <a href="">%s</a>]'), get_permalink( $post_ID) );
+				$topic_content .= "<br />" . sprintf( __('[See the full post at: <a href="">%s</a>]'), get_permalink( $post_ID) );
 				
 				$new_topic_data = array(
 					'post_parent'   => $topic_forum,
@@ -124,7 +131,6 @@ class BBP_PostTopics {
 					// return an error of some kind
 					die('there was an error creating a new topic');
 				} else {
-
 					update_post_meta($post_ID, 'use_bbpress_discussion_topic','true');
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $new_topic );
 				}
@@ -165,8 +171,31 @@ add_action( 'post_comment_status_meta_box-options', array(&$bbp_post_topics,'dis
 add_action( 'save_post', array(&$bbp_post_topics,'process_topic_option'), 10, 2 );
 add_filter( 'comments_template', array(&$bbp_post_topics,'maybe_change_comments_template') );
 
+/****************************
+ * Utility functions
+ */
+
+/**
+ * Check for a bbPress topic with a post_name matching the slug provided
+ * @param string Post slug
+ * @return object|NULL the topic or NULL if not found
+ */
+function bbppt_get_topic_by_slug( $slug ) {
+	
+	global $bbp, $wpdb;
+	
+	$topic = $wpdb->get_row( $wpdb->prepare('SELECT ID, post_name, post_parent FROM wp_posts WHERE post_name = %s AND post_type = %s', $slug, bbp_get_topic_post_type()) );
+	
+	if(is_null($topic))	return $topic;
+	return $topic;
+}
+
 /**
  * Filter and limit the content for use in the bbPress topic
+ * @param text $content Post content to be filtered
+ * @param int $cut # of words to keep in the exceprt (set to 0 for whole post)
+ * @param int $encode_html flag to determine HTML tag processing - see the_content_rss() for details
+ * @return text filtered content
  */
 function bbppt_post_discussion_get_the_content( $content, $cut = 0, $encode_html = 0 ) {
 	$content = apply_filters('the_content_rss', $content);

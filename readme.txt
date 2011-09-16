@@ -3,7 +3,7 @@ Contributors: ddean
 Tags: bbpress, topic, forum, post, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 0.1
+Stable tag: 0.2
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -16,7 +16,7 @@ A topic can be attached to as many posts as you'd like, but only one topic can c
 
 = Notes =
 
-This is an initial release!  Please do not use on production sites without extensive testing.
+This is still very new code!  Please do not use on production sites without extensive testing.
 
 == Installation ==
 
