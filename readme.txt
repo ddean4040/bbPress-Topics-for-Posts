@@ -1,4 +1,4 @@
-=== bbPress Post Topics ===
+=== bbPress Topics for Posts ===
 Contributors: ddean
 Tags: bbpress, topic, forum, post, comments, discussion
 Requires at least: 3.0
