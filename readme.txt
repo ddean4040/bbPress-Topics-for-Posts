@@ -1,6 +1,6 @@
 === bbPress Topics for Posts ===
 Contributors: ddean
-Tags: bbpress, topic, forum, post, comments, discussion
+Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.2.1
 Stable tag: 0.2
@@ -26,7 +26,7 @@ This is still very new code!  Please do not use on production sites without exte
 
 == Frequently Asked Questions ==
 
-First release!  No questions yet, so fire away!
+No questions yet, so fire away!
 
 == Screenshots ==
 

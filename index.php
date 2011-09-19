@@ -1,6 +1,6 @@
 <?php
 
-/**
+/*
 Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.jerseyconnect.net/development/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
@@ -19,7 +19,10 @@ class BBP_PostTopics {
 	 */
 	function display_topic_option( $post ) {
 
-		if(!function_exists('bbp_forums'))	return;
+		if(!function_exists('bbp_has_forums')) {
+			?><br /><p><?php _e('bbPress Topics for Posts has been enabled, but cannot detect your bbPress setup.','bbpress-post-topics'); ?></p><?php
+			return;
+		}
 
 		$bbpress_topic_status = get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true);
 		$bbpress_topic_slug   = get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true);
@@ -88,6 +91,11 @@ class BBP_PostTopics {
 		 */
 		if( isset($_POST['bbpress_topic_status']) && $_POST['bbpress_topic_status'] == 'open' ) {
 
+			if(!function_exists('bbp_has_forums')) {
+				?><br /><p><?php _e('bbPress Topics for Posts cannot process this request because it cannot detect your bbPress setup.','bbpress-post-topics'); ?></p><?php
+				return;
+			}
+
 			$topic_slug  = isset($_POST['bbpress_topic_slug']) ? $_POST['bbpress_topic_slug'] : '' ;
 			$topic_forum = isset($_POST['bbpress_topic_forum']) ? (int)$_POST['bbpress_topic_forum'] : 0 ;
 			
@@ -149,7 +157,7 @@ class BBP_PostTopics {
 
 		global $post, $bbp;
 
-		if(!function_exists('bbp_forums'))	return $template;
+		if(!function_exists('bbp_has_forums'))	return $template;
 		
 		if(get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true)) {
 			$topic_ID = get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true); 
