@@ -3,7 +3,7 @@ Contributors: ddean
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 0.2
+Stable tag: 0.3
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -37,6 +37,7 @@ No questions yet, so fire away!
 = 0.1 =
 Initial Release
 
-== Known Issues ==
+== Upgrade Notice ==
 
-The text `Comments Off` may still display above the forum topic at the bottom of the post
+= 0.3 =
+Better error handling and improved integration

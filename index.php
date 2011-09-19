@@ -5,8 +5,8 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.jerseyconnect.net/development/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.2
-Revision Date: 09/16/2011
+Version: 0.3
+Revision Date: 09/19/2011
 Requires at least: WP 3.0, bbPress 2.0-rc1
 Tested up to: WP 3.2.1 , bbPress 2.0-rc5
 Author URI: http://www.generalthreat.com/
@@ -84,7 +84,6 @@ class BBP_PostTopics {
 		if( !in_array( $post->post_type, apply_filters( 'bbppt_eligible_post_types', array('post','page') ) ) ) {
 			return;			
 		}
-
 
 		/**
 		 * The user requested to use a bbPress topic for discussion
@@ -170,6 +169,20 @@ class BBP_PostTopics {
 		return $template;
 	}
 	
+	/**
+	 * If a topic has been used for a post, give the number of replies in place of comment count
+	 */
+	function maybe_change_comments_number( $number, $post_ID ) {
+		
+		if(!function_exists('bbp_has_forums'))	return $number;
+		
+		if(get_post_meta( $post_ID, 'use_bbpress_discussion_topic', true)) {
+			$topic_ID = get_post_meta( $post_ID, 'bbpress_discussion_topic_id', true);
+			return bbp_get_topic_reply_count( $topic_ID );
+		}
+		
+		return $number;
+	}
 	
 }
 
@@ -178,6 +191,7 @@ $bbp_post_topics = new BBP_PostTopics;
 add_action( 'post_comment_status_meta_box-options', array(&$bbp_post_topics,'display_topic_option') );
 add_action( 'save_post', array(&$bbp_post_topics,'process_topic_option'), 10, 2 );
 add_filter( 'comments_template', array(&$bbp_post_topics,'maybe_change_comments_template') );
+add_filter( 'get_comments_number', array(&$bbp_post_topics,'maybe_change_comments_number'), 10, 2 );
 
 /****************************
  * Utility functions
