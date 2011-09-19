@@ -28,6 +28,10 @@ This is still very new code!  Please do not use on production sites without exte
 
 First release!  No questions yet, so fire away!
 
+== Screenshots ==
+
+1. The post meta box
+
 == Changelog ==
 
 = 0.1 =
