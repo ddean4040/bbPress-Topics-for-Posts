@@ -2,13 +2,13 @@
 
 /*
 Plugin Name: bbPress Topics for Posts
-Plugin URI: http://www.jerseyconnect.net/development/bbpress-post-topics
+Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.3
-Revision Date: 09/19/2011
+Version: 0.4
+Revision Date: 09/22/2011
 Requires at least: WP 3.0, bbPress 2.0-rc1
-Tested up to: WP 3.2.1 , bbPress 2.0-rc5
+Tested up to: WP 3.2.1 , bbPress 2.0
 Author URI: http://www.generalthreat.com/
 */
 
@@ -24,12 +24,15 @@ class BBP_PostTopics {
 			return;
 		}
 
-		$bbpress_topic_status = get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true);
-		$bbpress_topic_slug   = get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true);
+		$bbpress_topic_status	= get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true);
+		$bbpress_topic_slug		= get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true);
+		$bbpress_topic_hidden	= get_post_meta( $post->ID, 'bbpress_discussion_hide_topic', true);
 		if($bbpress_topic_slug) {
 			$bbpress_topic = bbp_get_topic( $bbpress_topic_slug);
 			$bbpress_topic_slug = $bbpress_topic->post_name;
 		}
+		
+		add_filter( 'bbp_has_forums_query', 'bbppt_remove_parent_forum_restriction' );
 		
 		$forums = bbp_has_forums();
 		
@@ -49,7 +52,8 @@ class BBP_PostTopics {
 					<?php if(bbp_is_forum_category())	continue; ?>
 					<option value="<?php echo bbp_get_forum_id() ?>"><?php echo bbp_get_forum_title(); ?></option>
 				<?php endwhile; ?>
-			</select>
+			</select><br />
+			&mdash; <input type="checkbox" <?php checked($bbpress_topic_hidden, true) ?> name="bbpress_topic_hidden" id="bbpress_topic_hidden" /> <label for="bbpress_topic_hidden"><?php _e('Show only replies on the post page','bbpress-post-topics'); ?></label>
 		</div>
 		<script type="text/javascript">
 			/** hide options when not checked */
@@ -95,8 +99,9 @@ class BBP_PostTopics {
 				return;
 			}
 
-			$topic_slug  = isset($_POST['bbpress_topic_slug']) ? $_POST['bbpress_topic_slug'] : '' ;
-			$topic_forum = isset($_POST['bbpress_topic_forum']) ? (int)$_POST['bbpress_topic_forum'] : 0 ;
+			$topic_slug   = isset($_POST['bbpress_topic_slug']) ? $_POST['bbpress_topic_slug'] : '' ;
+			$topic_forum  = isset($_POST['bbpress_topic_forum']) ? (int)$_POST['bbpress_topic_forum'] : 0 ;
+			$topic_hidden = isset($_POST['bbpress_topic_hidden']) ? true : false ;
 			
 			if($topic_slug != '') {
 				/** if user has selected an existing topic */
@@ -112,15 +117,16 @@ class BBP_PostTopics {
 					die('there was an error selecting the existing topic');
 				} else {
 					$topic_ID = $topic->ID;
-					update_post_meta($post_ID, 'use_bbpress_discussion_topic','true');
-					update_post_meta($post_ID, 'bbpress_discussion_topic_id', $topic_ID );
+					update_post_meta( $post_ID, 'use_bbpress_discussion_topic','true' );
+					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $topic_ID );
+					update_post_meta( $post_ID, 'bbpress_discussion_hide_topic', $topic_hidden );
 				}
 				
 			} else if($topic_forum != 0) {
 				/** if user has opted to create a new topic */
 				
 				$topic_content = ($post->post_excerpt != '') ? apply_filters('the_excerpt', $post->post_excerpt) : bbppt_post_discussion_get_the_content($post->post_content, 25) ;
-				$topic_content .= "<br />" . sprintf( __('[See the full post at: <a href="">%s</a>]'), get_permalink( $post_ID) );
+				$topic_content .= "<br />" . sprintf( __('[See the full post at: <a href="%s">%s</a>]'), get_permalink( $post_ID), get_permalink( $post_ID) );
 				
 				$new_topic_data = array(
 					'post_parent'   => $topic_forum,
@@ -138,14 +144,16 @@ class BBP_PostTopics {
 					// return an error of some kind
 					die('there was an error creating a new topic');
 				} else {
-					update_post_meta($post_ID, 'use_bbpress_discussion_topic','true');
+					update_post_meta( $post_ID, 'use_bbpress_discussion_topic','true' );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $new_topic );
+					update_post_meta( $post_ID, 'bbpress_discussion_hide_topic', $topic_hidden );
 				}
 				
 			}
 		} else {
 			delete_post_meta( $post_ID, 'use_bbpress_discussion_topic' );
 			delete_post_meta( $post_ID, 'bbpress_discussion_topic_id' );
+			delete_post_meta( $post_ID, 'bbpress_discussion_hide_topic' );
 		}
 	}
 	
@@ -161,8 +169,12 @@ class BBP_PostTopics {
 		if(get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true)) {
 			$topic_ID = get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true); 
 			if(file_exists(dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php')) {
-//				bbp_has_topics( array('ID'=> $topic_ID) );
 				$bbp->topic_query->post->ID = $topic_ID;
+				
+				if(get_post_meta( $post->ID, 'bbpress_discussion_hide_topic', true)) {
+					add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
+				}
+				
 		 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
 			}
 		}
@@ -206,7 +218,7 @@ function bbppt_get_topic_by_slug( $slug ) {
 	
 	global $bbp, $wpdb;
 	
-	$topic = $wpdb->get_row( $wpdb->prepare('SELECT ID, post_name, post_parent FROM wp_posts WHERE post_name = %s AND post_type = %s', $slug, bbp_get_topic_post_type()) );
+	$topic = $wpdb->get_row( $wpdb->prepare('SELECT ID, post_name, post_parent FROM ' . $wpdb->posts .  ' WHERE post_name = %s AND post_type = %s', $slug, bbp_get_topic_post_type()) );
 	
 	if(is_null($topic))	return $topic;
 	return $topic;
@@ -249,4 +261,26 @@ function bbppt_post_discussion_get_the_content( $content, $cut = 0, $encode_html
 	$content = str_replace(']]>', ']]&gt;', $content);
 	return $content;
 }
+
+/**
+ * Remove the `post_parent` field from the forum query to get a list of all available forums
+ * Made for use with the bbp_has_forums_query filter
+ */
+function bbppt_remove_parent_forum_restriction( $bbp_args ) {
+	
+	$new_args = array();
+	foreach($bbp_args as $key => $arg) {
+		if($key != 'post_parent') {
+			$new_args[$key] = $arg;
+		}
+	}
+	
+	return $new_args;
+}
+
+function bbppt_remove_topic_from_thread( $bbp_args ) {
+	$bbp_args['post_type'] = bbp_get_reply_post_type();
+	return $bbp_args;
+}
+
 ?>

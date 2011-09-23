@@ -1,9 +1,10 @@
 === bbPress Topics for Posts ===
 Contributors: ddean
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 0.3
+Stable tag: 0.4
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -33,6 +34,17 @@ No questions yet, so fire away!
 1. The post meta box
 
 == Changelog ==
+
+= 0.3 =
+* Added: show reply count instead of comment count for posts with an attached forum topic
+* Changed: display an error if bbPress is not detected instead of failing silently
+* Changed: how bbPress is detected
+
+= 0.2 =
+* Added: can use a topic ID or topic post_name/slug for existing topic
+* Added: better handling of bbPress environment
+* Fixed: use existing topic now works as expected
+* Fixed: finally settled on a name
 
 = 0.1 =
 Initial Release
