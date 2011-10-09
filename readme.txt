@@ -4,20 +4,20 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDC
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 0.4
+Stable tag: 0.5
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
 == Description ==
 
-Adds an option to the Discussion meta box to use a bbPress topic instead of WordPress comments.
+Adds an option to the Discussion meta box to use a bbPress topic instead of WordPress comments, and displays that topic beneath the post on your site.
 
 You can let the plugin create a new topic for you in the forum of your choice, or specify an existing topic to attach to the post.
 A topic can be attached to as many posts as you'd like, but only one topic can currently be attached to a post.
 
 = Notes =
 
-This is still very new code!  Please do not use on production sites without extensive testing.
+Please do not use on production sites without testing first.
 
 == Installation ==
 
@@ -27,11 +27,14 @@ This is still very new code!  Please do not use on production sites without exte
 
 == Frequently Asked Questions ==
 
-No questions yet, so fire away!
+= I don't see the Discussion meta box. Where is it? =
+
+See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-wordpress">this article</a> for a quick tip on how to toggle the Discussion meta box.
 
 == Screenshots ==
 
-1. The post meta box
+1. The post Discussion meta box
+2. Default post settings on the Discussion page
 
 == Changelog ==
 

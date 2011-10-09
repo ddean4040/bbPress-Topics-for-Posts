@@ -23,17 +23,22 @@ class BBP_PostTopics {
 			?><br /><p><?php _e('bbPress Topics for Posts has been enabled, but cannot detect your bbPress setup.','bbpress-post-topics'); ?></p><?php
 			return;
 		}
-
-		$bbpress_topic_status	= get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true);
+		
+		$bbpress_topic_defaults = get_option( 'bbpress_discussion_defaults', array('enabled' => false, 'forum_id' => 0, 'hide_topic' => false) );
+		
+		$bbpress_topic_default_status	  = ($bbpress_topic_defaults['enabled'] == 'on');
+		$bbpress_topic_default_forum	  = (int)$bbpress_topic_defaults['forum_id'];
+		$bbpress_topic_default_hide_topic = ($bbpress_topic_defaults['hide_topic'] == 'on');
+		
+		$bbpress_topic_status	= (get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true) == 'true') || get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true) || $bbpress_topic_default_status;
+		$bbpress_topic_hidden	= get_post_meta( $post->ID, 'bbpress_discussion_hide_topic', true) || $bbpress_topic_default_hide_topic;
 		$bbpress_topic_slug		= get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true);
-		$bbpress_topic_hidden	= get_post_meta( $post->ID, 'bbpress_discussion_hide_topic', true);
 		if($bbpress_topic_slug) {
 			$bbpress_topic = bbp_get_topic( $bbpress_topic_slug);
 			$bbpress_topic_slug = $bbpress_topic->post_name;
 		}
 		
 		add_filter( 'bbp_has_forums_query', 'bbppt_remove_parent_forum_restriction' );
-		
 		$forums = bbp_has_forums();
 		
 		if(!$forums) {
@@ -42,20 +47,21 @@ class BBP_PostTopics {
 		} 
 		?>
 		<br />
-		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic_status" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status, 'true'); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
-		<div id="bbpress_topic_status_options" style="display: <?php echo checked($bbpress_topic_status, 'true', false) ? 'block' : 'none' ?>;">
+		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic_status" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
+		<div id="bbpress_topic_status_options" style="display: <?php echo checked($bbpress_topic_status, true, false) ? 'block' : 'none' ?>;">
 			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic_slug" id="bbpress_topic_slug" value="<?php echo $bbpress_topic_slug ?>" />
 			  - OR - <label for="bbpress_topic_forum"><?php _e('Create a new topic in forum:', 'bbpress-post-topics' ); ?></label>
 			<select name="bbpress_topic_forum" id="bbpress_topic_forum">
 				<option value="0" selected><?php _e('Select a Forum', 'bbpress-post-topics' ); ?></option>
 				<?php while ( bbp_forums() ) : bbp_the_forum(); ?>
 					<?php if(bbp_is_forum_category())	continue; ?>
-					<option value="<?php echo bbp_get_forum_id() ?>"><?php echo bbp_get_forum_title(); ?></option>
+					<option value="<?php echo bbp_get_forum_id() ?>" <?php selected($bbpress_topic_default_forum,bbp_get_forum_id()) ?>><?php if(bbp_get_forum_parent()) echo '&mdash; ' ?><?php echo bbp_get_forum_title(); ?></option>
 				<?php endwhile; ?>
 			</select><br />
-			&mdash; <input type="checkbox" <?php checked($bbpress_topic_hidden, true) ?> name="bbpress_topic_hidden" id="bbpress_topic_hidden" /> <label for="bbpress_topic_hidden"><?php _e('Show only replies on the post page','bbpress-post-topics'); ?></label>
+			&mdash; <input type="checkbox" <?php checked($bbpress_topic_hidden) ?> name="bbpress_topic_hidden" id="bbpress_topic_hidden" /> <label for="bbpress_topic_hidden"><?php _e('Show only replies on the post page','bbpress-post-topics'); ?></label>
 		</div>
 		<script type="text/javascript">
+
 			/** hide options when not checked */
 			jQuery('#bbpress_topic_status').change(function() {
 				if(jQuery(this).attr('checked')) {
@@ -73,6 +79,7 @@ class BBP_PostTopics {
 					jQuery('#bbpress_topic_slug').removeAttr('disabled');
 				}
 			});
+			
 		</script>
 		<?php
 	}
@@ -117,7 +124,7 @@ class BBP_PostTopics {
 					die('there was an error selecting the existing topic');
 				} else {
 					$topic_ID = $topic->ID;
-					update_post_meta( $post_ID, 'use_bbpress_discussion_topic','true' );
+					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $topic_ID );
 					update_post_meta( $post_ID, 'bbpress_discussion_hide_topic', $topic_hidden );
 				}
@@ -144,7 +151,7 @@ class BBP_PostTopics {
 					// return an error of some kind
 					die('there was an error creating a new topic');
 				} else {
-					update_post_meta( $post_ID, 'use_bbpress_discussion_topic','true' );
+					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $new_topic );
 					update_post_meta( $post_ID, 'bbpress_discussion_hide_topic', $topic_hidden );
 				}
@@ -196,12 +203,47 @@ class BBP_PostTopics {
 		return $number;
 	}
 	
+	
+	/****************************
+	 * General Discussion options
+	 */
+	function add_discussion_page_settings() {
+		register_setting( 'discussion', 'bbpress_discussion_defaults' );
+		add_settings_field( 'bbpress_discussion_defaults', __('bbPress Topics for Posts Defaults','bbpress-post-topics'), array(&$this,'general_discussion_settings'), 'discussion', 'default', array('label_for'=>'bbpress_discussion_defaults_enabled') );
+	}
+	
+	function general_discussion_settings() {
+		$ex_options = get_option( 'bbpress_discussion_defaults' );
+		
+		add_filter( 'bbp_has_forums_query', 'bbppt_remove_parent_forum_restriction' );
+		$forums = bbp_has_forums();
+	
+		$forum_options = array();
+		$forum_options[0] = __('Select a Forum','bbpress-post-topics');
+		while ( bbp_forums() ) : bbp_the_forum();
+			if(bbp_is_forum_category())	continue;
+			$forum_options[bbp_get_forum_id()] = (bbp_get_forum_parent() ? ' &mdash; ' : '') . bbp_get_forum_title();
+		endwhile;
+		
+		$forum_select_string = '<select name="bbpress_discussion_defaults[forum_id]" id="bbpress_discussion_defaults_forum_id">';
+		foreach($forum_options as $forum_ID => $forum_name) {
+			$forum_select_string .= '<option value="' . $forum_ID . '" ' . selected( $ex_options['forum_id'], $forum_ID, false ) . '>' . $forum_name . '</option>';
+		}
+		$forum_select_string .= '</select>';
+		
+		?>
+		<input type="checkbox" name="bbpress_discussion_defaults[enabled]" id="bbpress_discussion_defaults_enabled" <?php checked($ex_options['enabled'],'on') ?>>
+		<label for="bbpress_discussion_defaults_enabled"><?php printf(_('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
+		<input type="checkbox" name="bbpress_discussion_defaults[hide_topic]" id="bbpress_discussion_defaults_hide_topic" <?php checked($ex_options['hide_topic'],'on') ?> /><label for="bbpress_discussion_defaults_hide_topic"><?php _e('Show only replies on the post page','bbpress-post-topics'); ?></label>
+		<?php
+	}
 }
 
 $bbp_post_topics = new BBP_PostTopics;
 
 add_action( 'post_comment_status_meta_box-options', array(&$bbp_post_topics,'display_topic_option') );
 add_action( 'save_post', array(&$bbp_post_topics,'process_topic_option'), 10, 2 );
+add_action( 'admin_init', array(&$bbp_post_topics, 'add_discussion_page_settings') );
 add_filter( 'comments_template', array(&$bbp_post_topics,'maybe_change_comments_template') );
 add_filter( 'get_comments_number', array(&$bbp_post_topics,'maybe_change_comments_number'), 10, 2 );
 
