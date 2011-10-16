@@ -5,10 +5,10 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.5
-Revision Date: 10/09/2011
+Version: 0.6
+Revision Date: 10/16/2011
 Requires at least: WP 3.0, bbPress 2.0-rc1
-Tested up to: WP 3.2.1 , bbPress 2.0
+Tested up to: WP 3.3-beta1 , bbPress 2.0
 Author URI: http://www.generalthreat.com/
 */
 
@@ -121,7 +121,7 @@ class BBP_PostTopics {
 				
 				if($topic == null) {
 					// return an error of some kind
-					die('there was an error selecting the existing topic');
+					wp_die(__('There was an error with your selected topic.','bbpress-post-topics'),__('Error Locating bbPress Topic','bbpress-post-topics'));
 				} else {
 					$topic_ID = $topic->ID;
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
@@ -133,7 +133,9 @@ class BBP_PostTopics {
 				/** if user has opted to create a new topic */
 				
 				$topic_content = ($post->post_excerpt != '') ? apply_filters('the_excerpt', $post->post_excerpt) : bbppt_post_discussion_get_the_content($post->post_content, 25) ;
-				$topic_content .= "<br />" . sprintf( __('[See the full post at: <a href="%s">%s</a>]'), get_permalink( $post_ID), get_permalink( $post_ID) );
+				$topic_content .= "<br />" . sprintf( __('[See the full post at: <a href="%s">%s</a>]','bbpress-post-topics'), get_permalink( $post_ID), get_permalink( $post_ID) );
+
+				$topic_content = apply_filters( 'bbppt_topic_content', $topic_content, $post_ID );
 				
 				$new_topic_data = array(
 					'post_parent'   => $topic_forum,
@@ -149,7 +151,7 @@ class BBP_PostTopics {
 				$new_topic = bbp_insert_topic( $new_topic_data, $new_topic_meta );
 				if(!$new_topic) {
 					// return an error of some kind
-					die('there was an error creating a new topic');
+					wp_die(__('There was an error creating a new topic.','bbpress-post-topics'),__('Error Creating bbPress Topic','bbpress-post-topics'));
 				} else {
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $new_topic );
