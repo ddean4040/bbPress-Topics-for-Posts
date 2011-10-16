@@ -233,7 +233,7 @@ class BBP_PostTopics {
 		
 		?>
 		<input type="checkbox" name="bbpress_discussion_defaults[enabled]" id="bbpress_discussion_defaults_enabled" <?php checked($ex_options['enabled'],'on') ?>>
-		<label for="bbpress_discussion_defaults_enabled"><?php printf(_('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
+		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
 		<input type="checkbox" name="bbpress_discussion_defaults[hide_topic]" id="bbpress_discussion_defaults_hide_topic" <?php checked($ex_options['hide_topic'],'on') ?> /><label for="bbpress_discussion_defaults_hide_topic"><?php _e('Show only replies on the post page','bbpress-post-topics'); ?></label>
 		<?php
 	}
