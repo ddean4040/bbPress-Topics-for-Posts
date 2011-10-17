@@ -34,7 +34,7 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 == Screenshots ==
 
 1. The post Discussion meta box
-2. Default post settings on the Discussion page
+1. Default post settings on the Discussion page
 
 == Changelog ==
 
