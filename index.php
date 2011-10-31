@@ -272,37 +272,16 @@ function bbppt_get_topic_by_slug( $slug ) {
  * Filter and limit the content for use in the bbPress topic
  * @param text $content Post content to be filtered
  * @param int $cut # of words to keep in the exceprt (set to 0 for whole post)
- * @param int $encode_html flag to determine HTML tag processing - see the_content_rss() for details
  * @return text filtered content
  */
-function bbppt_post_discussion_get_the_content( $content, $cut = 0, $encode_html = 0 ) {
+function bbppt_post_discussion_get_the_content( $content, $cut = 0 ) {
+	$content = wp_html_excerpt( $content, $cut );
+	$content = strip_shortcodes( $content );
+	
+	/** The `the_content_rss` filter will be removed in a future version! */
 	$content = apply_filters('the_content_rss', $content);
-	if ( $cut && !$encode_html )
-		$encode_html = 2;
-	if ( 1== $encode_html ) {
-		$content = esc_html($content);
-		$cut = 0;
-	} elseif ( 0 == $encode_html ) {
-		$content = make_url_footnote($content);
-	} elseif ( 2 == $encode_html ) {
-		$content = strip_tags($content);
-	}
-	if ( $cut ) {
-		$blah = explode(' ', $content);
-		if ( count($blah) > $cut ) {
-			$k = $cut;
-			$use_dotdotdot = 1;
-		} else {
-			$k = count($blah);
-			$use_dotdotdot = 0;
-		}
-
-		for ( $i=0; $i<$k; $i++ )
-			$excerpt .= $blah[$i].' ';
-		$excerpt .= ($use_dotdotdot) ? '...' : '';
-		$content = $excerpt;
-	}
-	$content = str_replace(']]>', ']]&gt;', $content);
+	
+	$content = apply_filters( 'bbppt_topic_content_before_link', $content );
 	return $content;
 }
 

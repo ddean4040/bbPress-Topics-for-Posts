@@ -38,6 +38,20 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 
 == Changelog ==
 
+= 0.6 =
+* Added: `bbppt_topic_content` filter to let others change the content of new topics
+* Changed: Made error strings more detailed when creating or assigning a topic fails
+* Fixed: translation function error (used `_(` instead of `__(` - D'oh!) - thanks, justin-mason and David100351
+
+= 0.5 =
+* Added: can set creating a bbPress topic for discussion as default for new posts
+* Changed: post meta format
+
+= 0.4 =
+* Added: option to show only replies on the post / page
+* Fixed: link in forum topic was to nowhere - thanks, justin-mason
+* Fixed: could not select child forums when creating a new topic - thanks, justin-mason
+
 = 0.3 =
 * Added: show reply count instead of comment count for posts with an attached forum topic
 * Changed: display an error if bbPress is not detected instead of failing silently
@@ -53,6 +67,15 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 0.6 =
+Fixed a typo that generates a warning. All users should upgrade.
+
+= 0.5 =
+Added settings to Discussion page to make bbPress topics the default commenting option
+
+= 0.4 =
+Fixed a bug that put an empty link into forum topics. All users should upgrade.
 
 = 0.3 =
 Better error handling and improved integration
