@@ -3,8 +3,8 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
-Tested up to: 3.3-beta1
-Stable tag: 0.6
+Tested up to: 3.3-beta3
+Stable tag: 0.7
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -37,6 +37,11 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 1. Default post settings on the Discussion page
 
 == Changelog ==
+
+= 0.7 =
+* Added: strip shortcodes from excerpt in topic - thanks, wpforchurch
+* Added: `bbppt_topic_content_before_link` filter to change topic content without processing the link
+* Changed: stopped using deprecated function for excerpt generation
 
 = 0.6 =
 * Added: `bbppt_topic_content` filter to let others change the content of new topics

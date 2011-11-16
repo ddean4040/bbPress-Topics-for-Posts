@@ -5,10 +5,10 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.6
-Revision Date: 10/16/2011
+Version: 0.7
+Revision Date: 11/16/2011
 Requires at least: WP 3.0, bbPress 2.0-rc1
-Tested up to: WP 3.3-beta1 , bbPress 2.0
+Tested up to: WP 3.3-beta3 , bbPress 2.0.1
 Author URI: http://www.generalthreat.com/
 */
 
@@ -132,7 +132,7 @@ class BBP_PostTopics {
 			} else if($topic_forum != 0) {
 				/** if user has opted to create a new topic */
 				
-				$topic_content = ($post->post_excerpt != '') ? apply_filters('the_excerpt', $post->post_excerpt) : bbppt_post_discussion_get_the_content($post->post_content, 25) ;
+				$topic_content = ($post->post_excerpt != '') ? apply_filters('the_excerpt', $post->post_excerpt) : bbppt_post_discussion_get_the_content($post->post_content, 150) ;
 				$topic_content .= "<br />" . sprintf( __('[See the full post at: <a href="%s">%s</a>]','bbpress-post-topics'), get_permalink( $post_ID), get_permalink( $post_ID) );
 
 				$topic_content = apply_filters( 'bbppt_topic_content', $topic_content, $post_ID );
@@ -271,12 +271,12 @@ function bbppt_get_topic_by_slug( $slug ) {
 /**
  * Filter and limit the content for use in the bbPress topic
  * @param text $content Post content to be filtered
- * @param int $cut # of words to keep in the exceprt (set to 0 for whole post)
+ * @param int $cut # of characters to keep in the exceprt (set to 0 for whole post)
  * @return text filtered content
  */
 function bbppt_post_discussion_get_the_content( $content, $cut = 0 ) {
-	$content = wp_html_excerpt( $content, $cut );
 	$content = strip_shortcodes( $content );
+	$content = wp_html_excerpt( $content, $cut );
 	
 	/** The `the_content_rss` filter will be removed in a future version! */
 	$content = apply_filters('the_content_rss', $content);
