@@ -76,6 +76,9 @@ Initial Release
 
 == Upgrade Notice ==
 
+= 0.8 =
+Prevent topic from being created until post is published
+
 = 0.7 =
 Strip shortcodes from generated excerpts and update excerpting function
 
