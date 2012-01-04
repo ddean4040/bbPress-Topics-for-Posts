@@ -8,7 +8,7 @@ Author: David Dean
 Version: 0.8
 Revision Date: 01/01/2012
 Requires at least: WP 3.0, bbPress 2.0-rc1
-Tested up to: WP 3.3 , bbPress 2.0.2
+Tested up to: WP 3.3.1 , bbPress 2.0.2
 Author URI: http://www.generalthreat.com/
 */
 
@@ -18,6 +18,10 @@ class BBP_PostTopics {
 	 * Add the bbPress topic option to the Discussion meta box
 	 */
 	function display_topic_option( $post ) {
+		
+		/** Store the post being edited and restore it after looping over forums */
+		global $post;
+		$the_post = $post;
 
 		if(!function_exists('bbp_has_forums')) {
 			?><br /><p><?php _e('bbPress Topics for Posts has been enabled, but cannot detect your bbPress setup.','bbpress-post-topics'); ?></p><?php
@@ -82,6 +86,8 @@ class BBP_PostTopics {
 			
 		</script>
 		<?php
+
+		$post = $the_post;
 	}
 	
 	/**
