@@ -5,8 +5,8 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.8
-Revision Date: 01/01/2012
+Version: 0.9
+Revision Date: 01/04/2012
 Requires at least: WP 3.0, bbPress 2.0-rc1
 Tested up to: WP 3.3.1 , bbPress 2.0.2
 Author URI: http://www.generalthreat.com/
@@ -87,6 +87,7 @@ class BBP_PostTopics {
 		</script>
 		<?php
 
+		/** Restore the original post being edited */
 		$post = $the_post;
 	}
 	

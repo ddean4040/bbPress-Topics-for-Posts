@@ -3,8 +3,8 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
-Tested up to: 3.3
-Stable tag: 0.8
+Tested up to: 3.3.1
+Stable tag: 0.9
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -35,8 +35,12 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 
 1. The post Discussion meta box
 1. Default post settings on the Discussion page
+1. Comment bubble replaced with the number of forum posts
 
 == Changelog ==
+
+= 0.9 =
+* Fixed: bug preventing access to edit posts / pages under some conditions - big thanks, KaiSD
 
 = 0.8 =
 * Changed: topic creation runs only when post is published, not when saving a draft
@@ -75,6 +79,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 0.9 =
+Fixed a bug that prevented post / page editing under some circumstances. All users should upgrade.
 
 = 0.8 =
 Prevent topic from being created until post is published
