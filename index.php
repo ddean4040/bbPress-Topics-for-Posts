@@ -197,8 +197,28 @@ class BBP_PostTopics {
 			if(file_exists(dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php')) {
 				$bbp->topic_query->post->ID = $topic_ID;
 				
+				/** Remove legacy post meta when post is accessed */
 				if(get_post_meta( $post->ID, 'bbpress_discussion_hide_topic', true)) {
-					add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
+					update_post_meta( $post->ID, 'bbpress_discussion_display', 'replies');
+					delete_post_meta( $post->ID, 'bbpress_discussion_hide_topic' );
+				}
+				
+				/** Handle posts where defaults were kept */
+				
+				
+				if( $display = get_post_meta( $post->ID, 'bbpress_discussion_display', true ) ) {
+					switch($display) {
+						case 'topic':
+					 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
+							break;
+						case 'xreplies':
+							add_filter( 'bbp_has_replies_query', 'bbppt_limit_replies');
+						case 'replies':
+							add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
+					 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
+							break;
+						case 'link':
+					}
 				}
 				
 		 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
@@ -253,7 +273,30 @@ class BBP_PostTopics {
 		?>
 		<input type="checkbox" name="bbpress_discussion_defaults[enabled]" id="bbpress_discussion_defaults_enabled" <?php checked($ex_options['enabled'],'on') ?>>
 		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
-		<input type="checkbox" name="bbpress_discussion_defaults[hide_topic]" id="bbpress_discussion_defaults_hide_topic" <?php checked($ex_options['hide_topic'],'on') ?> /><label for="bbpress_discussion_defaults_hide_topic"><?php _e('Show only replies on the post page','bbpress-post-topics'); ?></label>
+		<label for=""><?php _e('On the post page, show:'); ?></label><br />
+		<?php
+		
+		$xreplies_sort_options = array(
+			'newest'	=> __('most recent'),
+			'oldest'	=> __('oldest')
+		);
+
+		$xreplies_count = isset($ex_options['display-xcount']) ? $ex_options['display-xcount'] : 5;
+		$xreplies_count_string = '<input type="text" name="bbpress_discussion_defaults[display-xcount]" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
+
+		$sort_select_string = '<select name="bbpress_discussion_defaults[display-xsort]" id="bbpress_discussion_defaults_display_sort">';
+		foreach($xreplies_sort_options as $option => $label) {
+			$sort_select_string .= '<option value="' . $option . '" ' . selected( $ex_options['display-xsort'], $option, false ) . '>' . $label . '</option>';
+		}
+		$sort_select_string .= '</select>';
+		
+		?>
+		<fieldset>
+			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_topic" value="topic" <?php checked($ex_options['display'], 'topic'   ) ?> /><label for="bbpress_discussion_default_display_topic"><?php _e('Entire topic') ?></label><br />
+			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_replies" value="replies" <?php checked($ex_options['display'], 'replies' ) ?> /><label for="bbpress_discussion_default_display_replies"><?php _e('Replies only') ?></label><br />
+			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_xreplies" value="xreplies" <?php checked($ex_options['display'], 'xreplies') ?> /><label for="bbpress_discussion_default_display_xreplies"><?php printf(__('Only the %s %s %s replies'),'</label>', $xreplies_count_string, $sort_select_string ) ?><br />
+			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_link" value="link" <?php checked($ex_options['display'], 'link'    ) ?> /><label for="bbpress_discussion_default_display_link"><?php _e('A link to the topic') ?></label><br />
+		</fieldset>
 		<?php
 	}
 }
@@ -265,6 +308,22 @@ add_action( 'save_post', array(&$bbp_post_topics,'process_topic_option'), 10, 2 
 add_action( 'admin_init', array(&$bbp_post_topics, 'add_discussion_page_settings') );
 add_filter( 'comments_template', array(&$bbp_post_topics,'maybe_change_comments_template') );
 add_filter( 'get_comments_number', array(&$bbp_post_topics,'maybe_change_comments_number'), 10, 2 );
+
+register_activation_hook( __FILE__, 'bbppt_activate' );
+
+function bbppt_activate() {
+	
+	/** Update global settings to new format */
+	$ex_options = get_option( 'bbpress_discussion_defaults' );
+	if($ex_options['hide_topic'] == 'on') {
+		$ex_options['display']	= 'replies';
+	} else {
+		$ex_options['display']	= 'topic';
+	}
+	
+	update_option( 'bbpress_discussion_defaults', $ex_options );
+	
+}
 
 /****************************
  * Utility functions
@@ -318,9 +377,35 @@ function bbppt_remove_parent_forum_restriction( $bbp_args ) {
 	return $new_args;
 }
 
+/**
+ * Remove the original topic post from the replies query for a forum thread
+ * Made for use with the bbp_has_replies_query filter
+ */
 function bbppt_remove_topic_from_thread( $bbp_args ) {
 	$bbp_args['post_type'] = bbp_get_reply_post_type();
 	return $bbp_args;
+}
+
+function bbppt_limit_replies_in_thread( $bbp_args ) {
+	
+	global $post;
+
+	$per_page = get_post_meta( $post->ID, 'bbpress_discussion_display-xcount', true);
+	$sort = get_post_meta( $post->ID, 'bbpress_discussion_display-xsort', true);
+
+
+	$bbp_args['posts_per_page'] = $per_page;
+	
+	if($sort == 'newest') {
+		$bbp_args['orderby'] = 'date';
+		$bbp_args['order']	 = 'DESC';
+	} else if($sort == 'oldest') {
+		$bbp_args['orderby'] = 'date';
+		$bbp_args['order']	 = 'ASC';
+	}
+	
+	return $bbp_args;
+	
 }
 
 ?>
