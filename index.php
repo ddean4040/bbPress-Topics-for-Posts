@@ -28,15 +28,11 @@ class BBP_PostTopics {
 			return;
 		}
 		
-		$bbpress_topic_defaults = get_option( 'bbpress_discussion_defaults', array('enabled' => false, 'forum_id' => 0, 'hide_topic' => false) );
+		$bbpress_topic_options = $this->get_topic_options_for_post( $post->ID );
 		
-		$bbpress_topic_default_status	  = ($bbpress_topic_defaults['enabled'] == 'on');
-		$bbpress_topic_default_forum	  = (int)$bbpress_topic_defaults['forum_id'];
-		$bbpress_topic_default_hide_topic = ($bbpress_topic_defaults['hide_topic'] == 'on');
-		
-		$bbpress_topic_status	= (get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true) == 'true') || get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true) || $bbpress_topic_default_status;
-		$bbpress_topic_hidden	= get_post_meta( $post->ID, 'bbpress_discussion_hide_topic', true) || $bbpress_topic_default_hide_topic;
-		$bbpress_topic_slug		= get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true);
+		$bbpress_topic_status	= $bbpress_topic_options['enabled'];
+		$bbpress_topic_display	= $bbpress_topic_options['display'];
+		$bbpress_topic_slug		= $bbpress_topic_options['topic_id'];
 		if($bbpress_topic_slug) {
 			$bbpress_topic = bbp_get_topic( $bbpress_topic_slug);
 			$bbpress_topic_slug = $bbpress_topic->post_name;
@@ -51,22 +47,60 @@ class BBP_PostTopics {
 		} 
 		?>
 		<br />
-		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic_status" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
+		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic[enabled]" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
 		<div id="bbpress_topic_status_options" style="display: <?php echo checked($bbpress_topic_status, true, false) ? 'block' : 'none' ?>;">
-			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic_slug" id="bbpress_topic_slug" value="<?php echo $bbpress_topic_slug ?>" />
+			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic[slug]" id="bbpress_topic_slug" value="<?php echo $bbpress_topic_slug ?>" />
 			  - OR - <label for="bbpress_topic_forum"><?php _e('Create a new topic in forum:', 'bbpress-post-topics' ); ?></label>
-			<select name="bbpress_topic_forum" id="bbpress_topic_forum">
+			<select name="bbpress_topic[forum]" id="bbpress_topic_forum">
 				<option value="0" selected><?php _e('Select a Forum', 'bbpress-post-topics' ); ?></option>
 				<?php while ( bbp_forums() ) : bbp_the_forum(); ?>
 					<?php if(bbp_is_forum_category())	continue; ?>
-					<option value="<?php echo bbp_get_forum_id() ?>" <?php selected($bbpress_topic_default_forum,bbp_get_forum_id()) ?>><?php if(bbp_get_forum_parent()) echo '&mdash; ' ?><?php echo bbp_get_forum_title(); ?></option>
+					<option value="<?php echo bbp_get_forum_id() ?>" <?php selected($bbpress_topic_options['forum_id'],bbp_get_forum_id()) ?>><?php if(bbp_get_forum_parent()) echo '&mdash; ' ?><?php echo bbp_get_forum_title(); ?></option>
 				<?php endwhile; ?>
 			</select><br />
-			&mdash; <input type="checkbox" <?php checked($bbpress_topic_hidden) ?> name="bbpress_topic_hidden" id="bbpress_topic_hidden" /> <label for="bbpress_topic_hidden"><?php _e('Show only replies on the post page','bbpress-post-topics'); ?></label>
+			&mdash; <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults']) ?> />
+			<div id="bbpress_topic_display_options"  style="display: <?php echo checked($bbpress_topic_options['use_defaults'], true, false) ? 'none' : 'block' ?>;">
+				<label for=""><?php _e('On the post page, show:'); ?></label><br />
+				<?php
+				
+				$xreplies_sort_options = array(
+					'newest'	=> __('most recent'),
+					'oldest'	=> __('oldest')
+				);
+		
+				$xreplies_count = isset($bbpress_topic_options['display-extras']['xcount']) ? $bbpress_topic_options['display-extras']['xcount'] : 5;
+				$xreplies_count_string = '<input type="text" name="bbpress_topic[display-extras][xcount]" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
+		
+				$xsort_select_string = '<select name="bbpress_topic[display-extras][xsort]" id="bbpress_topic_display_sort">';
+				foreach($xreplies_sort_options as $option => $label) {
+					$xsort_select_string .= '<option value="' . $option . '" ' . selected( $bbpress_topic_options['display-extras']['xsort'], $option, false ) . '>' . $label . '</option>';
+				}
+				$xsort_select_string .= '</select>';
+
+				$link_input_value = ( isset( $bbpress_topic_options['display-extras']['link-text'] ) ? $bbpress_topic_options['display-extras']['link-text'] : '' );
+				$link_input_string = '<input type="text" name="bbpress_topic[display-extras][link-text]" class="regular-text" id="bbpress_topic_display_link_text" value="' . $link_input_value . '" />';
+				
+				/** Build list of display formats, including custom ones */
+				$display_formats = array(
+					'topic'		=> __( 'Entire topic', 'bbpress-post-topics' ),
+					'replies'	=> __( 'Replies only', 'bbpress-post-topics' ),
+					'xreplies'	=> sprintf(__( 'Only the %s %s %s replies', 'bbpress-post-topics' ),'</label>', $xreplies_count_string, $xsort_select_string ),
+					'link'		=> __( 'A link to the topic', 'bbpress-post-topics' ) . '</label> &mdash; <label for="bbpress_discussion_defaults_display_link_text">' . 
+									__( 'Link text:', 'bbpress-post-topics' ) . '</label>' . $link_input_string . ' <small>(' . __( 'Use %s to include the post name', 'bbpress-post-topics' ) . ')</small>'
+				);
+				$display_formats = apply_filters( 'bbppt_display_format_options', $display_formats, $the_post->ID );
+				
+				?>
+				<fieldset>
+					<?php foreach ($display_formats as $format_code => $format_label) : ?>
+					<input type="radio" name="bbpress_topic[display]" id="bbpress_topic_display_<?php echo $format_code ?>" value="<?php echo $format_code ?>" <?php checked($bbpress_topic_options['display'], $format_code ) ?> /><label for="bbpress_topic_display_<?php echo $format_code ?>"><?php echo $format_label ?></label><br />
+					<? endforeach; ?>
+				</fieldset>
+			</div>
 		</div>
 		<script type="text/javascript">
 
-			/** hide options when not checked */
+			/** hide topic options when not checked */
 			jQuery('#bbpress_topic_status').change(function() {
 				if(jQuery(this).attr('checked')) {
 					jQuery('#bbpress_topic_status_options').show();
@@ -74,6 +108,16 @@ class BBP_PostTopics {
 					jQuery('#bbpress_topic_status_options').hide();
 				}
 			});
+
+			/** hide display options when defaults are selected */
+			jQuery('#bbpress_topic_use_defaults').change(function() {
+				if(jQuery(this).attr('checked')) {
+					jQuery('#bbpress_topic_display_options').hide();
+				} else {
+					jQuery('#bbpress_topic_display_options').show();
+				}
+			});
+
 			
 			/** disable topic slug field when a forum is selected to prevent confusion */
 			jQuery('#bbpress_topic_forum').change(function() {
@@ -116,16 +160,29 @@ class BBP_PostTopics {
 		/**
 		 * The user requested to use a bbPress topic for discussion
 		 */
-		if( isset($_POST['bbpress_topic_status']) && $_POST['bbpress_topic_status'] == 'open' ) {
+		if( isset($_POST['bbpress_topic']) && $_POST['bbpress_topic']['enabled'] == 'open' ) {
 
+			$bbppt_options = $_POST['bbpress_topic'];
+			
+			$use_defaults = isset($bbppt_options['use_defaults']); 
+			
 			if(!function_exists('bbp_has_forums')) {
 				?><br /><p><?php _e('bbPress Topics for Posts cannot process this request because it cannot detect your bbPress setup.','bbpress-post-topics'); ?></p><?php
 				return;
 			}
 
-			$topic_slug   = isset($_POST['bbpress_topic_slug']) ? $_POST['bbpress_topic_slug'] : '' ;
-			$topic_forum  = isset($_POST['bbpress_topic_forum']) ? (int)$_POST['bbpress_topic_forum'] : 0 ;
-			$topic_hidden = isset($_POST['bbpress_topic_hidden']) ? true : false ;
+			$topic_slug		= isset($bbppt_options['slug']) ? $bbppt_options['slug'] : '' ;
+			$topic_forum	= isset($bbppt_options['forum_id']) ? (int)$bbppt_options['forum_id'] : 0 ;
+			
+			if( ! $use_defaults ) {
+				
+				$topic_display	= isset($bbppt_options['display']) ? $bbppt_options['display'] : 'topic' ;
+	
+				/** Store extra data for xreplies, as well as any custom display formats */
+				$topic_display_extras = apply_filters( 'bbppt_store_display_extras', $bbppt_options['display-extras'], $post );
+				
+			}
+			
 			
 			if($topic_slug != '') {
 				/** if user has selected an existing topic */
@@ -143,7 +200,14 @@ class BBP_PostTopics {
 					$topic_ID = $topic->ID;
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $topic_ID );
-					update_post_meta( $post_ID, 'bbpress_discussion_hide_topic', $topic_hidden );
+					
+					if( $use_defaults ) {
+						update_post_meta( $post_ID, 'bbpress_discussion_use_defaults', true );
+					} else {
+						update_post_meta( $post_ID, 'bbpress_discussion_display_format', $topic_display );
+						update_post_meta( $post_ID, 'bbpress_discussion_display_extras', $topic_display_extras );
+					}
+					
 				}
 				
 			} else if($topic_forum != 0) {
@@ -172,14 +236,23 @@ class BBP_PostTopics {
 				} else {
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $new_topic );
-					update_post_meta( $post_ID, 'bbpress_discussion_hide_topic', $topic_hidden );
+					
+					if( $use_defaults ) {
+						update_post_meta( $post_ID, 'bbpress_discussion_use_defaults', true );
+					} else {
+						update_post_meta( $post_ID, 'bbpress_discussion_display_format', $topic_display );
+						update_post_meta( $post_ID, 'bbpress_discussion_display_extras', $topic_display_extras );
+					}
+					
 				}
 				
 			}
 		} else {
 			delete_post_meta( $post_ID, 'use_bbpress_discussion_topic' );
 			delete_post_meta( $post_ID, 'bbpress_discussion_topic_id' );
-			delete_post_meta( $post_ID, 'bbpress_discussion_hide_topic' );
+			delete_post_meta( $post_ID, 'bbpress_discussion_use_defaults' );
+			delete_post_meta( $post_ID, 'bbpress_discussion_display_format' );
+			delete_post_meta( $post_ID, 'bbpress_discussion_display_extras' );
 		}
 	}
 	
@@ -197,28 +270,25 @@ class BBP_PostTopics {
 			if(file_exists(dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php')) {
 				$bbp->topic_query->post->ID = $topic_ID;
 				
-				/** Remove legacy post meta when post is accessed */
-				if(get_post_meta( $post->ID, 'bbpress_discussion_hide_topic', true)) {
-					update_post_meta( $post->ID, 'bbpress_discussion_display', 'replies');
-					delete_post_meta( $post->ID, 'bbpress_discussion_hide_topic' );
-				}
-				
 				/** Handle posts where defaults were kept */
+				$settings = $this->get_topic_options_for_post( $post->ID );
 				
-				
-				if( $display = get_post_meta( $post->ID, 'bbpress_discussion_display', true ) ) {
-					switch($display) {
-						case 'topic':
-					 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
-							break;
-						case 'xreplies':
-							add_filter( 'bbp_has_replies_query', 'bbppt_limit_replies');
-						case 'replies':
-							add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
-					 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
-							break;
-						case 'link':
-					}
+				switch($settings['display']) {
+					case 'topic':
+				 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
+						break;
+					case 'xreplies':
+						add_filter( 'bbp_has_replies_query', 'bbppt_limit_replies_in_thread');
+					case 'replies':
+						add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
+				 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
+						break;
+					case 'link':
+				 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress-link.php';
+						break;
+					default:
+						return apply_filters( 'bbppt_template_display_format_' . $settings['display'], $template, $settings );
+						break;
 				}
 				
 		 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
@@ -275,30 +345,120 @@ class BBP_PostTopics {
 		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
 		<label for=""><?php _e('On the post page, show:'); ?></label><br />
 		<?php
-		
+
+		$xreplies_count = isset($ex_options['display-extras][xcount']) ? $ex_options['display-extras][xcount'] : 5;
+		$xreplies_count_string = '<input type="text" name="bbpress_discussion_defaults[display-extras][xcount]" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
+
 		$xreplies_sort_options = array(
 			'newest'	=> __('most recent'),
 			'oldest'	=> __('oldest')
 		);
 
-		$xreplies_count = isset($ex_options['display-xcount']) ? $ex_options['display-xcount'] : 5;
-		$xreplies_count_string = '<input type="text" name="bbpress_discussion_defaults[display-xcount]" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
-
-		$sort_select_string = '<select name="bbpress_discussion_defaults[display-xsort]" id="bbpress_discussion_defaults_display_sort">';
+		$xsort_select_string = '<select name="bbpress_discussion_defaults[display-extras][xsort]" id="bbpress_discussion_defaults_display_sort">';
 		foreach($xreplies_sort_options as $option => $label) {
-			$sort_select_string .= '<option value="' . $option . '" ' . selected( $ex_options['display-xsort'], $option, false ) . '>' . $label . '</option>';
+			$xsort_select_string .= '<option value="' . $option . '" ' . selected( $ex_options['display-extras][xsort'], $option, false ) . '>' . $label . '</option>';
 		}
-		$sort_select_string .= '</select>';
+		$xsort_select_string .= '</select>';
+		
+		$link_input_value = ( isset( $ex_options['display-extras']['link-text'] ) ? $ex_options['display-extras']['link-text'] : __( 'Follow this link to join the discussion', 'bbpress-post-topics' ) );
+		$link_input_string = '<input type="text" name="bbpress_discussion_defaults[display-extras][link-text]" class="regular-text" id="bbpress_discussion_defaults_display_link_text" value="' . $link_input_value . '" />';
+		
+		/** Build list of display formats, including custom ones */
+		$display_formats = array(
+			'topic'		=> __( 'Entire topic', 'bbpress-post-topics' ),
+			'replies'	=> __( 'Replies only', 'bbpress-post-topics' ),
+			'xreplies'	=> sprintf(__( 'Only the %s %s %s replies', 'bbpress-post-topics' ),'</label>', $xreplies_count_string, $xsort_select_string ),
+			'link'		=> __( 'A link to the topic', 'bbpress-post-topics' ) . '</label> &mdash; <label for="bbpress_discussion_defaults_display_link_text">' . 
+							__( 'Link text:', 'bbpress-post-topics' ) . '</label>' . $link_input_string . ' <small>(' . __( 'Use %s to include the post name', 'bbpress-post-topics' ) . ')</small>'
+		);
+		$display_formats = apply_filters( 'bbppt_display_format_options', $display_formats, 0 );
 		
 		?>
 		<fieldset>
-			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_topic" value="topic" <?php checked($ex_options['display'], 'topic'   ) ?> /><label for="bbpress_discussion_default_display_topic"><?php _e('Entire topic') ?></label><br />
-			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_replies" value="replies" <?php checked($ex_options['display'], 'replies' ) ?> /><label for="bbpress_discussion_default_display_replies"><?php _e('Replies only') ?></label><br />
-			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_xreplies" value="xreplies" <?php checked($ex_options['display'], 'xreplies') ?> /><label for="bbpress_discussion_default_display_xreplies"><?php printf(__('Only the %s %s %s replies'),'</label>', $xreplies_count_string, $sort_select_string ) ?><br />
-			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_link" value="link" <?php checked($ex_options['display'], 'link'    ) ?> /><label for="bbpress_discussion_default_display_link"><?php _e('A link to the topic') ?></label><br />
+			<?php foreach ($display_formats as $format_code => $format_label) : ?>
+			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_<?php echo $format_code ?>" value="<?php echo $format_code ?>" <?php checked($ex_options['display'], $format_code ) ?> /><label for="bbpress_discussion_default_display_<?php echo $format_code ?>"><?php echo $format_label ?></label><br />
+			<? endforeach; ?>
 		</fieldset>
 		<?php
+		
+		do_action( 'bbppt_display_options_fields', 0 );
+		
 	}
+	
+	/**
+	 * Handle retrieving topic options for posts, including default processing
+	 * @param int $ID ID of post
+	 * @param string $option_name Optional name of an option to filter by
+	 */
+	function get_topic_options_for_post( $ID, $option_name = null ) {
+		
+		/** Conditions for applying default settings:
+		 * 1 - post where keep defaults was checked
+		 * 2 - new post
+		 */
+
+		$defaults = get_option( 'bbpress_discussion_defaults' );
+		
+		if(
+			get_post_meta( $ID, 'bbpress_discussion_use_defaults', true ) || 
+			! get_post_meta( $ID, 'bbpress_discussion_topic_id', true )
+		) {
+			
+			/** Post is using defaults, or is new - return default values */
+			
+			$display_extras = maybe_unserialize( $defaults['display-extras'] );
+			
+			$options = array(
+				'enabled'			=> $defaults['enabled'],
+				'use_defaults'		=> true,
+				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
+				'forum_id'			=> $defaults['forum_id'],
+				'display'			=> $defaults['display'],
+				'display-extras'	=> $display_extras
+			);
+			
+		} else {
+			
+			/** Post is using custom settings - return those values */
+
+			/** Remove legacy post meta when post is accessed */
+			if( get_post_meta( $ID, 'bbpress_discussion_hide_topic', true ) ) {
+				update_post_meta( $ID, 'bbpress_discussion_display_format', 'replies');
+				delete_post_meta( $ID, 'bbpress_discussion_hide_topic' );
+				$display = 'replies';
+			} else if( ! get_post_meta( $ID, 'bbpress_discussion_display_format', true ) ) {
+				update_post_meta( $ID, 'bbpress_discussion_display_format', 'topic');
+				$display = 'topic';
+			} else {
+				$display = get_post_meta( $ID, 'bbpress_discussion_display_format', true );
+			}
+			
+			$display_extras = maybe_unserialize( get_post_meta( $ID, 'bbpress_discussion_display_extras', true ) );
+			
+			/** Fill in any missing fields with defaults */
+			if( ! empty( $display_extras ) ) {
+				foreach( $defaults['display-extras'] as $display_extra => $extra_value ) {
+					if( ! array_key_exists( $display_extra, $display_extras ) ) {
+						$display_extras[$display_extra] = $extra_value;
+					}
+				}
+			} else {
+				$display_extras = $defaults['display-extras'];
+			}
+			
+			$options = array(
+				'enabled'			=> get_post_meta( $ID, 'use_bbpress_discussion_topic', true ),
+				'use_defaults'		=> false,
+				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
+				'display'			=> $display,
+				'display-extras'	=> $display_extras
+			);
+		}
+		
+		return $options;
+		
+	}
+	
 }
 
 $bbp_post_topics = new BBP_PostTopics;
@@ -386,13 +546,17 @@ function bbppt_remove_topic_from_thread( $bbp_args ) {
 	return $bbp_args;
 }
 
+/**
+ * Return only the selected number of replies, sorted in the selected way
+ */
 function bbppt_limit_replies_in_thread( $bbp_args ) {
 	
-	global $post;
+	global $post, $bbp_post_topics;
 
-	$per_page = get_post_meta( $post->ID, 'bbpress_discussion_display-xcount', true);
-	$sort = get_post_meta( $post->ID, 'bbpress_discussion_display-xsort', true);
+	$settings = $bbp_post_topics->get_topic_options_for_post( $post->ID );
 
+	$per_page = $settings['display-extras']['xcount'];
+	$sort = $settings['display-extras']['xsort'];
 
 	$bbp_args['posts_per_page'] = $per_page;
 	
