@@ -290,7 +290,6 @@ class BBP_PostTopics {
 						return apply_filters( 'bbppt_template_display_format_' . $settings['display'], $template, $settings );
 						break;
 				}
-				
 		 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
 			}
 		}

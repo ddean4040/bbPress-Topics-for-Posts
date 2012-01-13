@@ -15,13 +15,13 @@
 
 </div><!-- #comments -->
 <?php
-	/** Hide pagination when we are only displaying a certain number of posts */
+	/** Hide pagination and form when we are only displaying a certain number of posts */
 	global $bbp_post_topics, $post;
 	$settings = $bbp_post_topics->get_topic_options_for_post( $post->ID );
 	if($settings['display'] == 'xreplies') {
 		?>
 		<style type="text/css">
-			.bbp-pagination {
+			.bbp-pagination, .bbp-reply-form {
 				display: none;
 			}
 		</style>
