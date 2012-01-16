@@ -5,8 +5,8 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.9
-Revision Date: 01/04/2012
+Version: 0.9.5
+Revision Date: 01/16/2012
 Requires at least: WP 3.0, bbPress 2.0-rc1
 Tested up to: WP 3.3.1 , bbPress 2.0.2
 Author URI: http://www.generalthreat.com/
@@ -30,7 +30,7 @@ class BBP_PostTopics {
 		
 		$bbpress_topic_options = $this->get_topic_options_for_post( $post->ID );
 		
-		$bbpress_topic_status	= $bbpress_topic_options['enabled'];
+		$bbpress_topic_status	= $bbpress_topic_options['enabled'] != false;
 		$bbpress_topic_display	= $bbpress_topic_options['display'];
 		$bbpress_topic_slug		= $bbpress_topic_options['topic_id'];
 		if($bbpress_topic_slug) {
@@ -49,9 +49,9 @@ class BBP_PostTopics {
 		<br />
 		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic[enabled]" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
 		<div id="bbpress_topic_status_options" style="display: <?php echo checked($bbpress_topic_status, true, false) ? 'block' : 'none' ?>;">
-			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic[slug]" id="bbpress_topic_slug" value="<?php echo $bbpress_topic_slug ?>" />
+			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic[slug]" id="bbpress_topic_slug" placeholder="<?php _e( 'Topic ID or slug', 'bbpress-post-topics' ); ?>" value="<?php echo $bbpress_topic_slug ?>" />
 			  - OR - <label for="bbpress_topic_forum"><?php _e('Create a new topic in forum:', 'bbpress-post-topics' ); ?></label>
-			<select name="bbpress_topic[forum]" id="bbpress_topic_forum">
+			<select name="bbpress_topic[forum_id]" id="bbpress_topic_forum">
 				<option value="0" selected><?php _e('Select a Forum', 'bbpress-post-topics' ); ?></option>
 				<?php while ( bbp_forums() ) : bbp_the_forum(); ?>
 					<?php if(bbp_is_forum_category())	continue; ?>
@@ -59,7 +59,7 @@ class BBP_PostTopics {
 				<?php endwhile; ?>
 			</select><br />
 			&mdash; <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults']) ?> />
-			<div id="bbpress_topic_display_options"  style="display: <?php echo checked($bbpress_topic_options['use_defaults'], true, false) ? 'none' : 'block' ?>;">
+			<div id="bbpress_topic_display_options"  style="display: <?php echo checked($bbpress_topic_options['use_defaults'], true, false) ? 'none' : 'block' ?>; border-left: 1px solid #ccc; margin-left: 9px; padding-left: 5px;">
 				<label for=""><?php _e('On the post page, show:'); ?></label><br />
 				<?php
 				
@@ -85,8 +85,7 @@ class BBP_PostTopics {
 					'topic'		=> __( 'Entire topic', 'bbpress-post-topics' ),
 					'replies'	=> __( 'Replies only', 'bbpress-post-topics' ),
 					'xreplies'	=> sprintf(__( 'Only the %s %s %s replies', 'bbpress-post-topics' ),'</label>', $xreplies_count_string, $xsort_select_string ),
-					'link'		=> __( 'A link to the topic', 'bbpress-post-topics' ) . '</label> &mdash; <label for="bbpress_discussion_defaults_display_link_text">' . 
-									__( 'Link text:', 'bbpress-post-topics' ) . '</label>' . $link_input_string . ' <small>(' . __( 'Use %s to include the post name', 'bbpress-post-topics' ) . ')</small>'
+					'link'		=> __( 'A link to the topic', 'bbpress-post-topics' )
 				);
 				$display_formats = apply_filters( 'bbppt_display_format_options', $display_formats, $the_post->ID );
 				
@@ -131,6 +130,8 @@ class BBP_PostTopics {
 		</script>
 		<?php
 
+		do_action( 'bbppt_display_options_fields', $the_post->ID );
+
 		/** Restore the original post being edited */
 		$post = $the_post;
 	}
@@ -156,7 +157,7 @@ class BBP_PostTopics {
 		if( !in_array( $post->post_type, apply_filters( 'bbppt_eligible_post_types', array( 'post', 'page' ) ) ) ) {
 			return;			
 		}
-
+		
 		/**
 		 * The user requested to use a bbPress topic for discussion
 		 */
@@ -183,8 +184,7 @@ class BBP_PostTopics {
 				
 			}
 			
-			
-			if($topic_slug != '') {
+			if( ! empty($topic_slug) ) {
 				/** if user has selected an existing topic */
 				
 				if(is_numeric($topic_slug)) {
@@ -212,24 +212,9 @@ class BBP_PostTopics {
 				
 			} else if($topic_forum != 0) {
 				/** if user has opted to create a new topic */
-				
-				$topic_content = ($post->post_excerpt != '') ? apply_filters('the_excerpt', $post->post_excerpt) : bbppt_post_discussion_get_the_content($post->post_content, 150) ;
-				$topic_content .= "<br />" . sprintf( __('[See the full post at: <a href="%s">%s</a>]','bbpress-post-topics'), get_permalink( $post_ID), get_permalink( $post_ID) );
 
-				$topic_content = apply_filters( 'bbppt_topic_content', $topic_content, $post_ID );
+				$new_topic = $this->build_new_topic( $post, $topic_forum );
 				
-				$new_topic_data = array(
-					'post_parent'   => $topic_forum,
-					'post_author'   => $post->post_author,
-					'post_content'  => $topic_content,
-					'post_title'    => $post->post_title,
-				);
-				
-				$new_topic_meta = array(
-					'forum_id'			=> $topic_forum
-				);
-				
-				$new_topic = bbp_insert_topic( $new_topic_data, $new_topic_meta );
 				if(!$new_topic) {
 					// return an error of some kind
 					wp_die(__('There was an error creating a new topic.','bbpress-post-topics'),__('Error Creating bbPress Topic','bbpress-post-topics'));
@@ -257,6 +242,51 @@ class BBP_PostTopics {
 	}
 	
 	/**
+	 * Create the new topic when selected, including shortcode substitution
+	 */
+	function build_new_topic( $post, $topic_forum ) {
+
+		$strings = get_option( 'bbpress_discussion_text' );
+		$author_info = get_userdata( $post->post_author );
+		
+		if( isset( $strings['topic-text'] ) ) {
+			
+			$topic_content = $strings['topic-text'];
+			
+		} else {
+			
+			$topic_content = "%excerpt<br />" . sprintf( __('[See the full post at: <a href="%s">%s</a>]','bbpress-post-topics'), '%url', '%url' );
+			
+		}
+
+		$shortcodes = array(
+			'%title'	=> $post->post_title,
+			'%url'		=> get_permalink( $post->ID),
+			'%author'	=> $author_info->user_nicename,
+			'%excerpt'	=> ( empty( $post->post_excerpt ) ? bbppt_post_discussion_get_the_content($post->post_content, 150) : apply_filters('the_excerpt', $post->post_excerpt) ),
+			'%post'		=> $post->post_content
+		);
+		$shortcodes = apply_filters( 'bbppt_shortcodes_output', $shortcodes, $post, $topic_forum );
+		
+		$topic_content = str_replace( array_keys($shortcodes), array_values($shortcodes), $topic_content);
+		$topic_content = apply_filters( 'bbppt_topic_content', $topic_content, $post->ID );
+		
+		$new_topic_data = array(
+			'post_parent'   => (int)$topic_forum,
+			'post_author'   => $post->post_author,
+			'post_content'  => $topic_content,
+			'post_title'    => $post->post_title,
+		);
+		
+		$new_topic_meta = array(
+			'forum_id'			=> (int)$topic_forum
+		);
+		
+		$new_topic = bbp_insert_topic( $new_topic_data, $new_topic_meta );
+		return $new_topic;
+	}
+	
+	/**
 	 * Display the bbPress topic plugin template instead of the WordPress comments template
 	 */
 	function maybe_change_comments_template( $template ) {
@@ -265,9 +295,12 @@ class BBP_PostTopics {
 
 		if(!function_exists('bbp_has_forums'))	return $template;
 		
-		if(get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true)) {
-			$topic_ID = get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true); 
-			if(file_exists(dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php')) {
+		if( get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true ) ) {
+			
+			$topic_ID = get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true);
+			 
+			if( file_exists( dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php' ) ) {
+				
 				$bbp->topic_query->post->ID = $topic_ID;
 				
 				/** Handle posts where defaults were kept */
@@ -315,14 +348,25 @@ class BBP_PostTopics {
 	/****************************
 	 * General Discussion options
 	 */
+	
+	/**
+	 * Register our sections for the Discussion settings page
+	 */
 	function add_discussion_page_settings() {
 		register_setting( 'discussion', 'bbpress_discussion_defaults' );
+		register_setting( 'discussion', 'bbpress_discussion_text' );
 		add_settings_field( 'bbpress_discussion_defaults', __('bbPress Topics for Posts Defaults','bbpress-post-topics'), array(&$this,'general_discussion_settings'), 'discussion', 'default', array('label_for'=>'bbpress_discussion_defaults_enabled') );
+		add_settings_field( 'bbpress_discussion_text', __('bbPress Topics for Posts Strings','bbpress-post-topics'), array(&$this,'general_discussion_text_settings'), 'discussion', 'default' );
 	}
 	
+	/**
+	 * Section for setting defaults for bbPress Topics for Posts
+	 */
 	function general_discussion_settings() {
+		
 		$ex_options = get_option( 'bbpress_discussion_defaults' );
 		
+		/** Build a list of all forums to use in a select box */
 		add_filter( 'bbp_has_forums_query', 'bbppt_remove_parent_forum_restriction' );
 		$forums = bbp_has_forums();
 	
@@ -359,16 +403,13 @@ class BBP_PostTopics {
 		}
 		$xsort_select_string .= '</select>';
 		
-		$link_input_value = ( isset( $ex_options['display-extras']['link-text'] ) ? $ex_options['display-extras']['link-text'] : __( 'Follow this link to join the discussion', 'bbpress-post-topics' ) );
-		$link_input_string = '<input type="text" name="bbpress_discussion_defaults[display-extras][link-text]" class="regular-text" id="bbpress_discussion_defaults_display_link_text" value="' . $link_input_value . '" />';
 		
 		/** Build list of display formats, including custom ones */
 		$display_formats = array(
 			'topic'		=> __( 'Entire topic', 'bbpress-post-topics' ),
 			'replies'	=> __( 'Replies only', 'bbpress-post-topics' ),
 			'xreplies'	=> sprintf(__( 'Only the %s %s %s replies', 'bbpress-post-topics' ),'</label>', $xreplies_count_string, $xsort_select_string ),
-			'link'		=> __( 'A link to the topic', 'bbpress-post-topics' ) . '</label> &mdash; <label for="bbpress_discussion_defaults_display_link_text">' . 
-							__( 'Link text:', 'bbpress-post-topics' ) . '</label>' . $link_input_string . ' <small>(' . __( 'Use %s to include the post name', 'bbpress-post-topics' ) . ')</small>'
+			'link'		=> __( 'A link to the topic', 'bbpress-post-topics' ) . '</label>'
 		);
 		$display_formats = apply_filters( 'bbppt_display_format_options', $display_formats, 0 );
 		
@@ -385,6 +426,49 @@ class BBP_PostTopics {
 	}
 	
 	/**
+	 * Section for setting strings for new topics and link
+	 */
+	function general_discussion_text_settings() {
+
+		$text_options = get_option( 'bbpress_discussion_text' );
+		
+		if(isset($text_options['topic-text'])) {
+			$topic_text_value = $text_options['topic-text'];
+		} else {
+			$topic_text_value = '%excerpt' . '<br />' . sprintf(__( '[See the full post at: <a href="%s">%s</a>]', 'bbpress-post-topics' ), '%url', '%title' );
+		}
+		$link_text_value = ( isset( $text_options['link-text'] ) ? $text_options['link-text'] : __( 'Follow this link to join the discussion', 'bbpress-post-topics' ) );
+		
+		$shortcodes = array(
+			'%title'	=> __( 'Post title', 'bbpress-post-topics' ),
+			'%url'		=> __( 'Post Permalink', 'bbpress-post-topics' ),
+			'%author'	=> __( 'Post author\'s display name', 'bbpress-post-topics' ),
+			'%excerpt'	=> __( 'Post except (or a 150-character snippet)', 'bbpress-post-topics' ),
+			'%post'		=> __( 'Full post text', 'bbpress-post-topics' )
+		);
+		$shortcodes = apply_filters( 'bbppt_shortcodes_list', $shortcodes );
+		
+		?>
+		<label for="bbpress_discussion_text_topic_text"><?php _e( 'Content of topic first post:', 'bbpress-post-topics' ) ?></label>
+		<p>
+			<textarea name="bbpress_discussion_text[topic-text]" id="bbpress_discussion_text_topic_text" class="large-text code"><?php echo $topic_text_value ?></textarea>
+			<small>
+				(<?php _e( 'Use the substitutions below:', 'bbpress-post-topics' ) ?>)<br />
+				<?php foreach( $shortcodes as $code => $description ) {
+					echo $code . ' &mdash; ' . $description . '<br />';
+				} ?>
+			</small>
+		</p>
+		<label for=""><?php _e( 'Link text (when showing only a link to the topic):', 'bbpress-post-topics' ) ?></label>
+		<input type="text" name="bbpress_discussion_text[link-text]" class="regular-text" id="bbpress_discussion_text_link_text" value="<?php echo $link_text_value ?>" />
+		<small>(<?php _e( 'Use %s to include the post name', 'bbpress-post-topics' ) ?>)</small>
+		<?php
+
+		do_action( 'bbppt_display_text_options_fields', 0 );
+
+	}
+	
+	/**
 	 * Handle retrieving topic options for posts, including default processing
 	 * @param int $ID ID of post
 	 * @param string $option_name Optional name of an option to filter by
@@ -397,6 +481,7 @@ class BBP_PostTopics {
 		 */
 
 		$defaults = get_option( 'bbpress_discussion_defaults' );
+		$strings  = get_option( 'bbpress_discussion_text' );
 		
 		if(
 			get_post_meta( $ID, 'bbpress_discussion_use_defaults', true ) || 
@@ -413,7 +498,8 @@ class BBP_PostTopics {
 				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
 				'forum_id'			=> $defaults['forum_id'],
 				'display'			=> $defaults['display'],
-				'display-extras'	=> $display_extras
+				'display-extras'	=> $display_extras,
+				'text'				=> $strings
 			);
 			
 		} else {
@@ -450,7 +536,8 @@ class BBP_PostTopics {
 				'use_defaults'		=> false,
 				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
 				'display'			=> $display,
-				'display-extras'	=> $display_extras
+				'display-extras'	=> $display_extras,
+				'text'				=> $strings
 			);
 		}
 		
@@ -474,10 +561,20 @@ function bbppt_activate() {
 	
 	/** Update global settings to new format */
 	$ex_options = get_option( 'bbpress_discussion_defaults' );
+	$text_options = get_option( 'bbpress_discussion_text' );
+	
 	if($ex_options['hide_topic'] == 'on') {
 		$ex_options['display']	= 'replies';
 	} else {
 		$ex_options['display']	= 'topic';
+	}
+	unset($ex_options['hide_topic']);
+	
+	/** Update link text storage to new format - old format was never released, but was available in dev version */
+	if( isset($ex_options['display-extras']['link-text']))	{
+		$text_options['link-text'] = $ex_options['display-extras']['link-text'];
+		update_option( 'bbpress_discussion_text', $text_options );
+		unset($ex_options['display-extras']['link-text']);
 	}
 	
 	update_option( 'bbpress_discussion_defaults', $ex_options );
