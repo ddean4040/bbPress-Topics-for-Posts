@@ -93,7 +93,7 @@ class BBP_PostTopics {
 				<fieldset>
 					<?php foreach ($display_formats as $format_code => $format_label) : ?>
 					<input type="radio" name="bbpress_topic[display]" id="bbpress_topic_display_<?php echo $format_code ?>" value="<?php echo $format_code ?>" <?php checked($bbpress_topic_options['display'], $format_code ) ?> /><label for="bbpress_topic_display_<?php echo $format_code ?>"><?php echo $format_label ?></label><br />
-					<? endforeach; ?>
+					<?php endforeach; ?>
 				</fieldset>
 			</div>
 		</div>
@@ -354,7 +354,7 @@ class BBP_PostTopics {
 	 */
 	function add_discussion_page_settings() {
 		register_setting( 'discussion', 'bbpress_discussion_defaults' );
-		register_setting( 'discussion', 'bbpress_discussion_text' );
+		register_setting( 'discussion', 'bbpress_discussion_text', array( &$this, 'sanitize_text_settings' ) );
 		add_settings_field( 'bbpress_discussion_defaults', __('bbPress Topics for Posts Defaults','bbpress-post-topics'), array(&$this,'general_discussion_settings'), 'discussion', 'default', array('label_for'=>'bbpress_discussion_defaults_enabled') );
 		add_settings_field( 'bbpress_discussion_text', __('bbPress Topics for Posts Strings','bbpress-post-topics'), array(&$this,'general_discussion_text_settings'), 'discussion', 'default' );
 	}
@@ -417,7 +417,7 @@ class BBP_PostTopics {
 		<fieldset>
 			<?php foreach ($display_formats as $format_code => $format_label) : ?>
 			<input type="radio" name="bbpress_discussion_defaults[display]" id="bbpress_discussion_default_display_<?php echo $format_code ?>" value="<?php echo $format_code ?>" <?php checked($ex_options['display'], $format_code ) ?> /><label for="bbpress_discussion_default_display_<?php echo $format_code ?>"><?php echo $format_label ?></label><br />
-			<? endforeach; ?>
+			<?php endforeach; ?>
 		</fieldset>
 		<?php
 		
@@ -469,6 +469,20 @@ class BBP_PostTopics {
 	}
 	
 	/**
+	 * Sanitize the general discussion strings
+	 */
+	function sanitize_text_settings( $strings ) {
+		
+		if( isset( $strings['topic-text'] ) ) {
+			
+			$strings['topic-text'] = wp_kses_post( $strings['topic-text'] );
+			
+		}
+		
+		return $strings;
+	}
+	
+	/**
 	 * Handle retrieving topic options for posts, including default processing
 	 * @param int $ID ID of post
 	 * @param string $option_name Optional name of an option to filter by
@@ -481,6 +495,10 @@ class BBP_PostTopics {
 		 */
 
 		$defaults = get_option( 'bbpress_discussion_defaults' );
+		if( ! array_key_exists( 'display-extras', $defaults ) ) {
+			$defaults['display-extras'] = array();
+		}
+
 		$strings  = get_option( 'bbpress_discussion_text' );
 		
 		if(
@@ -571,7 +589,7 @@ function bbppt_activate() {
 	unset($ex_options['hide_topic']);
 	
 	/** Update link text storage to new format - old format was never released, but was available in dev version */
-	if( isset($ex_options['display-extras']['link-text']))	{
+	if( isset( $ex_options['display-extras'] ) && isset( $ex_options['display-extras']['link-text'] ) )	{
 		$text_options['link-text'] = $ex_options['display-extras']['link-text'];
 		update_option( 'bbpress_discussion_text', $text_options );
 		unset($ex_options['display-extras']['link-text']);
