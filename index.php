@@ -77,9 +77,6 @@ class BBP_PostTopics {
 				}
 				$xsort_select_string .= '</select>';
 
-				$link_input_value = ( isset( $bbpress_topic_options['display-extras']['link-text'] ) ? $bbpress_topic_options['display-extras']['link-text'] : '' );
-				$link_input_string = '<input type="text" name="bbpress_topic[display-extras][link-text]" class="regular-text" id="bbpress_topic_display_link_text" value="' . $link_input_value . '" />';
-				
 				/** Build list of display formats, including custom ones */
 				$display_formats = array(
 					'topic'		=> __( 'Entire topic', 'bbpress-post-topics' ),
@@ -364,6 +361,13 @@ class BBP_PostTopics {
 	 */
 	function general_discussion_settings() {
 		
+		if( ! function_exists( 'bbp_has_forums' ) ) {
+			?>
+			<p><?php _e( 'You must install or enable bbPress to use this plugin.', 'bbpress-post-topics' ); ?></p>
+			<?php
+			return;
+		}
+		
 		$ex_options = get_option( 'bbpress_discussion_defaults' );
 		
 		/** Build a list of all forums to use in a select box */
@@ -389,7 +393,7 @@ class BBP_PostTopics {
 		<label for=""><?php _e('On the post page, show:'); ?></label><br />
 		<?php
 
-		$xreplies_count = isset($ex_options['display-extras][xcount']) ? $ex_options['display-extras][xcount'] : 5;
+		$xreplies_count = isset($ex_options['display-extras']['xcount']) ? $ex_options['display-extras']['xcount'] : 5;
 		$xreplies_count_string = '<input type="text" name="bbpress_discussion_defaults[display-extras][xcount]" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
 
 		$xreplies_sort_options = array(
@@ -399,7 +403,7 @@ class BBP_PostTopics {
 
 		$xsort_select_string = '<select name="bbpress_discussion_defaults[display-extras][xsort]" id="bbpress_discussion_defaults_display_sort">';
 		foreach($xreplies_sort_options as $option => $label) {
-			$xsort_select_string .= '<option value="' . $option . '" ' . selected( $ex_options['display-extras][xsort'], $option, false ) . '>' . $label . '</option>';
+			$xsort_select_string .= '<option value="' . $option . '" ' . selected( $ex_options['display-extras']['xsort'], $option, false ) . '>' . $label . '</option>';
 		}
 		$xsort_select_string .= '</select>';
 		
@@ -430,6 +434,13 @@ class BBP_PostTopics {
 	 */
 	function general_discussion_text_settings() {
 
+		if( ! function_exists( 'bbp_has_forums' ) ) {
+			?>
+			<p><?php _e( 'You must install or enable bbPress to use this plugin.', 'bbpress-post-topics' ); ?></p>
+			<?php
+			return;
+		}
+		
 		$text_options = get_option( 'bbpress_discussion_text' );
 		
 		if(isset($text_options['topic-text'])) {
