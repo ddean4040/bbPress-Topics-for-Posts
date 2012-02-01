@@ -25,6 +25,6 @@
 				display: none;
 			}
 		</style>
-		<?
+		<?php
 	}
 ?>
