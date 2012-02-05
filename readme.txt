@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDC
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 0.9.5
+Stable tag: 1.0
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -14,12 +14,6 @@ Adds an option to the Discussion meta box to use a bbPress topic instead of Word
 
 You can let the plugin create a new topic for you in the forum of your choice, or specify an existing topic to attach to the post.
 A topic can be attached to as many posts as you'd like, but only one topic can currently be attached to a post.
-
-= Notes =
-
-We are nearly to 1.0! Please let me know if you run into any issues.
-
-Please do not use on production sites without testing first.
 
 == Installation ==
 
@@ -40,6 +34,12 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 1. Comment bubble replaced with the number of forum posts
 
 == Changelog ==
+
+= 1.0 =
+* Changed: default topic text is processed with kses
+* Fixed: bug that could prevent going back to custom settings once defaults were selected
+* Fixed: short_open_tag issues - thanks, dalekoop and drsim
+* Fixed: error when default discussion settings hadn't been saved - thanks, richardjay
 
 = 0.9.5 =
 * Added: option to display only link to topic under post
@@ -89,6 +89,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.0 =
+Bug fixes for all the new features.  All users should upgrade.
 
 = 0.9.5 =
 Just new features. Enjoy!

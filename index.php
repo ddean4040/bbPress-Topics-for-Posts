@@ -5,8 +5,8 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 0.9.5
-Revision Date: 01/16/2012
+Version: 1.0
+Revision Date: 02/04/2012
 Requires at least: WP 3.0, bbPress 2.0-rc1
 Tested up to: WP 3.3.1 , bbPress 2.0.2
 Author URI: http://www.generalthreat.com/
@@ -33,6 +33,7 @@ class BBP_PostTopics {
 		$bbpress_topic_status	= $bbpress_topic_options['enabled'] != false;
 		$bbpress_topic_display	= $bbpress_topic_options['display'];
 		$bbpress_topic_slug		= $bbpress_topic_options['topic_id'];
+		
 		if($bbpress_topic_slug) {
 			$bbpress_topic = bbp_get_topic( $bbpress_topic_slug);
 			$bbpress_topic_slug = $bbpress_topic->post_name;
@@ -113,7 +114,6 @@ class BBP_PostTopics {
 					jQuery('#bbpress_topic_display_options').show();
 				}
 			});
-
 			
 			/** disable topic slug field when a forum is selected to prevent confusion */
 			jQuery('#bbpress_topic_forum').change(function() {
@@ -162,7 +162,7 @@ class BBP_PostTopics {
 
 			$bbppt_options = $_POST['bbpress_topic'];
 			
-			$use_defaults = isset($bbppt_options['use_defaults']); 
+			$use_defaults = isset($bbppt_options['use_defaults']);
 			
 			if(!function_exists('bbp_has_forums')) {
 				?><br /><p><?php _e('bbPress Topics for Posts cannot process this request because it cannot detect your bbPress setup.','bbpress-post-topics'); ?></p><?php
@@ -181,7 +181,7 @@ class BBP_PostTopics {
 				
 			}
 			
-			if( ! empty($topic_slug) ) {
+			if( ! empty( $topic_slug ) ) {
 				/** if user has selected an existing topic */
 				
 				if(is_numeric($topic_slug)) {
@@ -201,6 +201,7 @@ class BBP_PostTopics {
 					if( $use_defaults ) {
 						update_post_meta( $post_ID, 'bbpress_discussion_use_defaults', true );
 					} else {
+						delete_post_meta( $post_ID, 'bbpress_discussion_use_defaults' );
 						update_post_meta( $post_ID, 'bbpress_discussion_display_format', $topic_display );
 						update_post_meta( $post_ID, 'bbpress_discussion_display_extras', $topic_display_extras );
 					}
@@ -522,7 +523,7 @@ class BBP_PostTopics {
 			$display_extras = maybe_unserialize( $defaults['display-extras'] );
 			
 			$options = array(
-				'enabled'			=> $defaults['enabled'],
+				'enabled'			=> get_post_meta( $ID, 'use_bbpress_discussion_topic', true ) || $defaults['enabled'],
 				'use_defaults'		=> true,
 				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
 				'forum_id'			=> $defaults['forum_id'],
