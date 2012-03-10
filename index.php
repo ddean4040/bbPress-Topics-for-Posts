@@ -5,12 +5,14 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 1.0
+Version: 1.1-testing
 Revision Date: 02/04/2012
-Requires at least: WP 3.0, bbPress 2.0-rc1
-Tested up to: WP 3.3.1 , bbPress 2.0.2
+Requires at least: WP 3.0, bbPress 2.0
+Tested up to: WP 3.3.1 , bbPress 2.1-r773
 Author URI: http://www.generalthreat.com/
 */
+
+include dirname( __FILE__ ) . '/compatibility.php';
 
 class BBP_PostTopics {
 	
@@ -56,7 +58,7 @@ class BBP_PostTopics {
 				<option value="0" selected><?php _e('Select a Forum', 'bbpress-post-topics' ); ?></option>
 				<?php while ( bbp_forums() ) : bbp_the_forum(); ?>
 					<?php if(bbp_is_forum_category())	continue; ?>
-					<option value="<?php echo bbp_get_forum_id() ?>" <?php selected($bbpress_topic_options['forum_id'],bbp_get_forum_id()) ?>><?php if(bbp_get_forum_parent()) echo '&mdash; ' ?><?php echo bbp_get_forum_title(); ?></option>
+					<option value="<?php echo bbp_get_forum_id() ?>" <?php selected( $bbpress_topic_options['forum_id'], bbp_get_forum_id() ) ?>><?php if( bbppt_get_forum_parent_id() ) echo '&mdash; ' ?><?php echo bbp_get_forum_title(); ?></option>
 				<?php endwhile; ?>
 			</select><br />
 			&mdash; <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults']) ?> />
@@ -379,7 +381,7 @@ class BBP_PostTopics {
 		$forum_options[0] = __('Select a Forum','bbpress-post-topics');
 		while ( bbp_forums() ) : bbp_the_forum();
 			if(bbp_is_forum_category())	continue;
-			$forum_options[bbp_get_forum_id()] = (bbp_get_forum_parent() ? ' &mdash; ' : '') . bbp_get_forum_title();
+			$forum_options[bbp_get_forum_id()] = (bbppt_get_forum_parent_id() ? ' &mdash; ' : '') . bbp_get_forum_title();
 		endwhile;
 		
 		$forum_select_string = '<select name="bbpress_discussion_defaults[forum_id]" id="bbpress_discussion_defaults_forum_id">';
@@ -603,11 +605,18 @@ function bbppt_activate() {
 	/** Update link text storage to new format - old format was never released, but was available in dev version */
 	if( isset( $ex_options['display-extras'] ) && isset( $ex_options['display-extras']['link-text'] ) )	{
 		$text_options['link-text'] = $ex_options['display-extras']['link-text'];
-		update_option( 'bbpress_discussion_text', $text_options );
 		unset($ex_options['display-extras']['link-text']);
 	}
 	
 	update_option( 'bbpress_discussion_defaults', $ex_options );
+	
+	/** Set default link text */
+	if( ! isset( $text_options['link-text'] ) ) {
+		$text_options = array(
+			'link-text'		=> __( 'Follow this link to join the discussion', 'bbpress-post-topics' )
+		);
+	}
+	update_option( 'bbpress_discussion_text', $text_options );
 	
 }
 

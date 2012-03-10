@@ -9,7 +9,15 @@
 	<?php do_action( 'bbp_template_before_single_topic' ); ?>
 	<?php 
 		global $bbp;
-		echo $bbp->shortcodes->display_topic(array('id'=>$bbp->topic_query->post->ID));
+		
+		if(isset($bbp->shortcodes)) {
+			/** bbPress 2.0.x */
+			echo $bbp->shortcodes->display_topic(array('id'=>$bbp->topic_query->post->ID));
+		} else {
+			/** bbPress 2.1.x */
+			echo bbpress()->shortcodes->display_topic(array('id'=>$bbp->topic_query->post->ID));
+		}
+		
 	?>
 	<?php do_action( 'bbp_template_after_single_topic' ); ?>
 
