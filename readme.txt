@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDC
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.3.1
-Stable tag: 1.0
+Stable tag: 1.1
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -34,6 +34,10 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 1. Comment bubble replaced with the number of forum posts
 
 == Changelog ==
+
+= 1.1 =
+* Added: support for bbPress 2.1
+* Fixed: Bug that broke "Link to topic" option until default discussion settings were saved
 
 = 1.0 =
 * Changed: default topic text is processed with kses
