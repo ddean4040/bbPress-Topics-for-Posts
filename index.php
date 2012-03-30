@@ -68,12 +68,12 @@ class BBP_PostTopics {
 			</select><br />
 			&mdash; <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults']) ?> />
 			<div id="bbpress_topic_display_options"  style="display: <?php echo checked($bbpress_topic_options['use_defaults'], true, false) ? 'none' : 'block' ?>; border-left: 1px solid #ccc; margin-left: 9px; padding-left: 5px;">
-				<label for=""><?php _e('On the post page, show:'); ?></label><br />
+				<label for=""><?php _e( 'On the post page, show:', 'bbpress-post-topics' ); ?></label><br />
 				<?php
 				
 				$xreplies_sort_options = array(
-					'newest'	=> __('most recent'),
-					'oldest'	=> __('oldest')
+					'newest'	=> __( 'most recent', 'bbpress-post-topics' ),
+					'oldest'	=> __( 'oldest', 'bbpress-post-topics' )
 				);
 		
 				$xreplies_count = isset($bbpress_topic_options['display-extras']['xcount']) ? $bbpress_topic_options['display-extras']['xcount'] : 5;
@@ -398,15 +398,15 @@ class BBP_PostTopics {
 		?>
 		<input type="checkbox" name="bbpress_discussion_defaults[enabled]" id="bbpress_discussion_defaults_enabled" <?php checked($ex_options['enabled'],'on') ?>>
 		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
-		<label for=""><?php _e('On the post page, show:'); ?></label><br />
+		<label for=""><?php _e( 'On the post page, show:', 'bbpress-post-topics' ); ?></label><br />
 		<?php
 
 		$xreplies_count = isset($ex_options['display-extras']['xcount']) ? $ex_options['display-extras']['xcount'] : 5;
 		$xreplies_count_string = '<input type="text" name="bbpress_discussion_defaults[display-extras][xcount]" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
 
 		$xreplies_sort_options = array(
-			'newest'	=> __('most recent'),
-			'oldest'	=> __('oldest')
+			'newest'	=> __( 'most recent', 'bbpress-post-topics' ),
+			'oldest'	=> __( 'oldest', 'bbpress-post-topics' )
 		);
 
 		$xsort_select_string = '<select name="bbpress_discussion_defaults[display-extras][xsort]" id="bbpress_discussion_defaults_display_sort">';
