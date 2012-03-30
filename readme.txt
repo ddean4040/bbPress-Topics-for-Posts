@@ -35,6 +35,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 
 == Changelog ==
 
+= 1.2 =
+* Added: translation support - thanks, efedoso
+
 = 1.1 =
 * Added: support for bbPress 2.1
 * Fixed: Bug that broke "Link to topic" option until default discussion settings were saved
@@ -93,6 +96,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.1 =
+bbPress 2.1 support
 
 = 1.0 =
 Bug fixes for all the new features.  All users should upgrade.

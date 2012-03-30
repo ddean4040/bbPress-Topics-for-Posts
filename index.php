@@ -14,6 +14,11 @@ Author URI: http://www.generalthreat.com/
 
 include dirname( __FILE__ ) . '/compatibility.php';
 
+/** load localization files if present */
+if( file_exists( dirname( __FILE__ ) . '/' . dirname(plugin_basename(__FILE__)) . '-' . get_locale() . '.mo' ) ) {
+	load_plugin_textdomain( 'bbpress-post-topics', false, dirname(plugin_basename(__FILE__)) . '' );
+}
+
 class BBP_PostTopics {
 	
 	/**
