@@ -5,10 +5,10 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 1.1
-Revision Date: 02/04/2012
+Version: 1.2-testing
+Revision Date: 05/01/2012
 Requires at least: WP 3.0, bbPress 2.0
-Tested up to: WP 3.3.1 , bbPress 2.1-r773
+Tested up to: WP 3.3.2 , bbPress 2.1-r773
 Author URI: http://www.generalthreat.com/
 */
 
@@ -66,6 +66,7 @@ class BBP_PostTopics {
 					<option value="<?php echo bbp_get_forum_id() ?>" <?php selected( $bbpress_topic_options['forum_id'], bbp_get_forum_id() ) ?>><?php if( bbppt_get_forum_parent_id() ) echo '&mdash; ' ?><?php echo bbp_get_forum_title(); ?></option>
 				<?php endwhile; ?>
 			</select><br />
+			&mdash; <label for="bbpress_topic_copy_tags"><?php _e( 'Copy post tags to new topic', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[copy_tags]" id="bbpress_topic_copy_tags" <?php checked( $bbpress_topic_options['copy_tags']) ?> /><br />
 			&mdash; <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults']) ?> />
 			<div id="bbpress_topic_display_options"  style="display: <?php echo checked($bbpress_topic_options['use_defaults'], true, false) ? 'none' : 'block' ?>; border-left: 1px solid #ccc; margin-left: 9px; padding-left: 5px;">
 				<label for=""><?php _e( 'On the post page, show:', 'bbpress-post-topics' ); ?></label><br />
@@ -140,6 +141,12 @@ class BBP_PostTopics {
 		$post = $the_post;
 	}
 	
+	function catch_xmlrpc_post( $callname ) {
+		
+		$this->xmlrpc_post = true;
+		
+	}
+	
 	/**
 	 * Process the user's bbPress topic selections when the post is saved
 	 */
@@ -163,15 +170,30 @@ class BBP_PostTopics {
 		}
 		
 		/**
+		 * If this is an XMLRPC post, we have to use the defaults.
+		 * Otherwise, check the POST for any custom settings
+		 */
+		if( isset( $this->xmlrpc_post ) ) {
+			$bbppt_options = get_option( 'bbpress_discussion_defaults' );
+			$create_topic = true;
+			$use_defaults = true;
+		} else {
+			if( isset($_POST['bbpress_topic']) && $_POST['bbpress_topic']['enabled'] == 'open' ) {
+				$bbppt_options = $_POST['bbpress_topic'];
+				$create_topic = true;
+				$use_defaults = isset($bbppt_options['use_defaults']);
+			} else {
+				$create_topic = false;
+			}
+			
+		}
+		
+		/**
 		 * The user requested to use a bbPress topic for discussion
 		 */
-		if( isset($_POST['bbpress_topic']) && $_POST['bbpress_topic']['enabled'] == 'open' ) {
+		if( $create_topic ) {
 
-			$bbppt_options = $_POST['bbpress_topic'];
-			
-			$use_defaults = isset($bbppt_options['use_defaults']);
-			
-			if(!function_exists('bbp_has_forums')) {
+			if( ! function_exists('bbp_has_forums') ) {
 				?><br /><p><?php _e('bbPress Topics for Posts cannot process this request because it cannot detect your bbPress setup.','bbpress-post-topics'); ?></p><?php
 				return;
 			}
@@ -205,6 +227,13 @@ class BBP_PostTopics {
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $topic_ID );
 					
+					/** Update topic with tags from the post */
+					if( $bbppt_options['copy_tags'] ) {
+						$post_tags = wp_get_post_tags( $post_ID );
+						$post_tags = array_map( create_function( '$term', 'return $term->name;' ), $post_tags );
+						wp_set_post_terms( $topic_ID, join(',',$post_tags), bbp_get_topic_tag_tax_id(), true );
+					}
+					
 					if( $use_defaults ) {
 						update_post_meta( $post_ID, 'bbpress_discussion_use_defaults', true );
 					} else {
@@ -226,6 +255,13 @@ class BBP_PostTopics {
 				} else {
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
 					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $new_topic );
+
+					/** Update topic with tags from the post */
+					if( $bbppt_options['copy_tags'] ) {
+						$post_tags = wp_get_post_tags( $post_ID );
+						$post_tags = array_map( create_function( '$term', 'return $term->name;' ), $post_tags );
+						wp_set_post_terms( $new_topic, join(',',$post_tags), bbp_get_topic_tag_tax_id(), false );
+					}
 					
 					if( $use_defaults ) {
 						update_post_meta( $post_ID, 'bbpress_discussion_use_defaults', true );
@@ -266,7 +302,7 @@ class BBP_PostTopics {
 
 		$shortcodes = array(
 			'%title'	=> $post->post_title,
-			'%url'		=> get_permalink( $post->ID),
+			'%url'		=> get_permalink( $post->ID ),
 			'%author'	=> $author_info->user_nicename,
 			'%excerpt'	=> ( empty( $post->post_excerpt ) ? bbppt_post_discussion_get_the_content($post->post_content, 150) : apply_filters('the_excerpt', $post->post_excerpt) ),
 			'%post'		=> $post->post_content
@@ -280,7 +316,7 @@ class BBP_PostTopics {
 			'post_parent'   => (int)$topic_forum,
 			'post_author'   => $post->post_author,
 			'post_content'  => $topic_content,
-			'post_title'    => $post->post_title,
+			'post_title'    => $post->post_title
 		);
 		
 		$new_topic_meta = array(
@@ -398,11 +434,15 @@ class BBP_PostTopics {
 		?>
 		<input type="checkbox" name="bbpress_discussion_defaults[enabled]" id="bbpress_discussion_defaults_enabled" <?php checked($ex_options['enabled'],'on') ?>>
 		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
+
+		<input type="checkbox" name="bbpress_discussion_defaults[copy_tags]" id="bbpress_discussion_defaults_copy_tags" <?php checked($ex_options['copy_tags'],'on') ?>>
+		<label for="bbpress_discussion_defaults_copy_tags"><?php _e('Copy post tags to new topics','bbpress-post-topics'); ?></label><br />
+
 		<label for=""><?php _e( 'On the post page, show:', 'bbpress-post-topics' ); ?></label><br />
 		<?php
 
 		$xreplies_count = isset($ex_options['display-extras']['xcount']) ? $ex_options['display-extras']['xcount'] : 5;
-		$xreplies_count_string = '<input type="text" name="bbpress_discussion_defaults[display-extras][xcount]" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
+		$xreplies_count_string = '<input type="text" name="bbpress_discussion_defaults[display-extras][xcount]" id="bbpress_discussion_defaults_display-extras_xcount" value="' . $xreplies_count . '" class="small-text" maxlength="3" />';
 
 		$xreplies_sort_options = array(
 			'newest'	=> __( 'most recent', 'bbpress-post-topics' ),
@@ -586,11 +626,12 @@ class BBP_PostTopics {
 
 $bbp_post_topics = new BBP_PostTopics;
 
-add_action( 'post_comment_status_meta_box-options', array(&$bbp_post_topics,'display_topic_option') );
-add_action( 'save_post', array(&$bbp_post_topics,'process_topic_option'), 10, 2 );
-add_action( 'admin_init', array(&$bbp_post_topics, 'add_discussion_page_settings') );
-add_filter( 'comments_template', array(&$bbp_post_topics,'maybe_change_comments_template') );
-add_filter( 'get_comments_number', array(&$bbp_post_topics,'maybe_change_comments_number'), 10, 2 );
+add_action( 'post_comment_status_meta_box-options', array( &$bbp_post_topics, 'display_topic_option' ) );
+add_action( 'save_post', 			array( &$bbp_post_topics, 'process_topic_option' ), 10, 2 );
+add_action( 'admin_init', 			array( &$bbp_post_topics, 'add_discussion_page_settings' ) );
+add_action( 'xmlrpc_call', 			array( &$bbp_post_topics, 'catch_xmlrpc_post' ) );
+add_filter( 'comments_template', 	array( &$bbp_post_topics, 'maybe_change_comments_template' ) );
+add_filter( 'get_comments_number', 	array( &$bbp_post_topics, 'maybe_change_comments_number' ), 10, 2 );
 
 register_activation_hook( __FILE__, 'bbppt_activate' );
 
