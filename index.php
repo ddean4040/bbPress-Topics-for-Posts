@@ -5,10 +5,10 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 1.2-testing
+Version: 1.3-testing
 Revision Date: 05/02/2012
 Requires at least: WP 3.0, bbPress 2.0
-Tested up to: WP 3.3.2 , bbPress 2.1-r773
+Tested up to: WP 3.4-beta3 , bbPress 2.1-r3773
 Author URI: http://www.generalthreat.com/
 */
 
@@ -20,6 +20,24 @@ if( file_exists( dirname( __FILE__ ) . '/' . dirname(plugin_basename(__FILE__)) 
 }
 
 class BBP_PostTopics {
+	
+	/**
+	 * Create the bbPress Topics for Posts meta box for post types defined by
+	 * 'bbppt_eligible_post_types' filter
+	 */
+	function add_meta_box() {
+
+		foreach( apply_filters( 'bbppt_eligible_post_types', array( 'post', 'page' )) as $post_type ) {
+			add_meta_box(
+				'bbpress-post-topic',
+				__('bbPress Topic for this Post', 'bbpress-post-topics'),
+				array( &$this, 'display_meta_box' ),
+				$post_type
+			);
+		}
+	}
+	
+	function display_meta_box( $post ) {}
 	
 	/**
 	 * Add the bbPress topic option to the Discussion meta box
@@ -626,6 +644,7 @@ class BBP_PostTopics {
 
 $bbp_post_topics = new BBP_PostTopics;
 
+//add_action( 'add_meta_boxes',		array( &$bbp_post_topics, 'add_meta_box' ) );
 add_action( 'post_comment_status_meta_box-options', array( &$bbp_post_topics, 'display_topic_option' ) );
 add_action( 'save_post', 			array( &$bbp_post_topics, 'process_topic_option' ), 10, 2 );
 add_action( 'admin_init', 			array( &$bbp_post_topics, 'add_discussion_page_settings' ) );

@@ -3,8 +3,8 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
-Tested up to: 3.3.1
-Stable tag: 1.1
+Tested up to: 3.4-beta3
+Stable tag: 1.2
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -36,7 +36,10 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 == Changelog ==
 
 = 1.2 =
+* Added: support for copying tags from post to topic
+* Added: support for creating topics for XML-RPC posts (only if creating a topic is set in defaults)
 * Added: translation support - thanks, efedoso
+* Changed: addslashes to topic body, fixing some topic content issues - thanks, sangil
 
 = 1.1 =
 * Added: support for bbPress 2.1
@@ -96,6 +99,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.2 =
+New features! Better translation, XML-RPC support, can copy post tags to topics
 
 = 1.1 =
 bbPress 2.1 support
