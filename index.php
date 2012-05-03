@@ -6,7 +6,7 @@ Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
 Version: 1.2-testing
-Revision Date: 05/01/2012
+Revision Date: 05/02/2012
 Requires at least: WP 3.0, bbPress 2.0
 Tested up to: WP 3.3.2 , bbPress 2.1-r773
 Author URI: http://www.generalthreat.com/
@@ -175,7 +175,7 @@ class BBP_PostTopics {
 		 */
 		if( isset( $this->xmlrpc_post ) ) {
 			$bbppt_options = get_option( 'bbpress_discussion_defaults' );
-			$create_topic = true;
+			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'on' );
 			$use_defaults = true;
 		} else {
 			if( isset($_POST['bbpress_topic']) && $_POST['bbpress_topic']['enabled'] == 'open' ) {
@@ -309,8 +309,8 @@ class BBP_PostTopics {
 		);
 		$shortcodes = apply_filters( 'bbppt_shortcodes_output', $shortcodes, $post, $topic_forum );
 		
-		$topic_content = str_replace( array_keys($shortcodes), array_values($shortcodes), $topic_content);
-		$topic_content = apply_filters( 'bbppt_topic_content', $topic_content, $post->ID );
+		$topic_content = str_replace( array_keys($shortcodes), array_values($shortcodes), $topic_content );
+		$topic_content = apply_filters( 'bbppt_topic_content', addslashes( $topic_content ), $post->ID );
 		
 		$new_topic_data = array(
 			'post_parent'   => (int)$topic_forum,
