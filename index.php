@@ -64,7 +64,6 @@ class BBP_PostTopics {
 			$bbpress_topic_slug = $bbpress_topic->post_name;
 		}
 		
-		add_filter( 'bbp_has_forums_query', 'bbppt_remove_parent_forum_restriction' );
 		$forums = bbp_has_forums();
 		
 		if(!$forums) {
@@ -75,16 +74,22 @@ class BBP_PostTopics {
 		<br />
 		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic[enabled]" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
 		<div id="bbpress_topic_status_options" style="display: <?php echo checked($bbpress_topic_status, true, false) ? 'block' : 'none' ?>;">
-			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic[slug]" id="bbpress_topic_slug" placeholder="<?php _e( 'Topic ID or slug', 'bbpress-post-topics' ); ?>" value="<?php echo $bbpress_topic_slug ?>" />
+			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic[slug]" id="bbpress_topic_slug" placeholder="<?php _e( 'Topic ID or slug', 'bbpress-post-topics' ); ?>" value="<?php echo $bbpress_topic_slug ?>" <?php if( $bbpress_topic_options['forum_id'] ) echo ' disabled="true"'; ?> />
 			  - OR - <label for="bbpress_topic_forum"><?php _e('Create a new topic in forum:', 'bbpress-post-topics' ); ?></label>
 			<select name="bbpress_topic[forum_id]" id="bbpress_topic_forum">
 				<option value="0" selected><?php _e('Select a Forum', 'bbpress-post-topics' ); ?></option>
-				<?php while ( bbp_forums() ) : bbp_the_forum(); ?>
-					<?php if(bbp_is_forum_category())	continue; ?>
-					<option value="<?php echo bbp_get_forum_id() ?>" <?php selected( $bbpress_topic_options['forum_id'], bbp_get_forum_id() ) ?>><?php if( bbppt_get_forum_parent_id() ) echo '&mdash; ' ?><?php echo bbp_get_forum_title(); ?></option>
-				<?php endwhile; ?>
+				<?php
+				$forum_dropdown_options = array(
+					'selected'		=> $bbpress_topic_options['forum_id'],
+					'options_only'	=> true
+				);
+				bbp_dropdown( $forum_dropdown_options ); 
+				?>
 			</select><br />
 			&mdash; <label for="bbpress_topic_copy_tags"><?php _e( 'Copy post tags to new topic', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[copy_tags]" id="bbpress_topic_copy_tags" <?php checked( $bbpress_topic_options['copy_tags']) ?> /><br />
+			<?php if( wp_count_comments( $post->ID )->total_comments > 0 ) : ?>
+			&mdash; <label for="bbpress_topic_copy_comments"><?php _e( 'Copy comments to bbPress topic', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[copy_comments]" id="bbpress_topic_copy_comments" <?php checked( $bbpress_topic_options['copy_comments']) ?> /><br />
+			<?php endif; ?>
 			&mdash; <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults']) ?> />
 			<div id="bbpress_topic_display_options"  style="display: <?php echo checked($bbpress_topic_options['use_defaults'], true, false) ? 'none' : 'block' ?>; border-left: 1px solid #ccc; margin-left: 9px; padding-left: 5px;">
 				<label for=""><?php _e( 'On the post page, show:', 'bbpress-post-topics' ); ?></label><br />
@@ -707,7 +712,7 @@ function bbppt_get_topic_by_slug( $slug ) {
 /**
  * Filter and limit the content for use in the bbPress topic
  * @param text $content Post content to be filtered
- * @param int $cut # of characters to keep in the exceprt (set to 0 for whole post)
+ * @param int $cut # of characters to keep in the excerpt (set to 0 for whole post)
  * @return text filtered content
  */
 function bbppt_post_discussion_get_the_content( $content, $cut = 0 ) {
@@ -719,22 +724,6 @@ function bbppt_post_discussion_get_the_content( $content, $cut = 0 ) {
 	
 	$content = apply_filters( 'bbppt_topic_content_before_link', $content );
 	return $content;
-}
-
-/**
- * Remove the `post_parent` field from the forum query to get a list of all available forums
- * Made for use with the bbp_has_forums_query filter
- */
-function bbppt_remove_parent_forum_restriction( $bbp_args ) {
-	
-	$new_args = array();
-	foreach($bbp_args as $key => $arg) {
-		if($key != 'post_parent') {
-			$new_args[$key] = $arg;
-		}
-	}
-	
-	return $new_args;
 }
 
 /**
@@ -770,6 +759,86 @@ function bbppt_limit_replies_in_thread( $bbp_args ) {
 	
 	return $bbp_args;
 	
+}
+
+
+/**
+ * Create bbPress replies with already existing comments
+ * 
+ * @author javiarques
+ * @param int $post_id
+ * @param int $topic_id
+ */
+//function bbppt_import_comments( $post_id, $topic_id, $topic_forum ) {
+function export_comments_to_bbpress ( $post_id, $topic_id, $topic_forum ) {
+	
+	/** getting post comments */
+	$post_comments = get_comments( array( 'post_id' => $post_id, 'order' => 'ASC' ) );
+	
+	if ( $post_comments ) {
+		foreach ( $post_comments as $post_comment ) {
+			
+			if ( ! empty( $post_comment->comment_type ) ) {
+				continue;
+			}
+			
+			/** Allow individual comments to be skipped */
+			if( ! apply_filters( 'bbppt_do_import_comment', true, $post_comment ) )	continue;
+
+			// TODO: check for reply with imported_comment_id meta_key to prevent duplicate replies
+			// when updating post topic options
+			
+			// If user is not registered
+			if ( empty( $post_comment->user_id ) ) {
+				
+				// 1. Check if user exists by email
+				if ( ! empty( $post_comment->comment_author_email ) ) {
+					$existing_user = get_user_by( 'email', $post_comment->comment_author_email );
+					
+					if ( $existing_user )
+						$post_comment->user_id = $existing_user->ID;
+				}
+
+			}
+			
+			// Reply data
+			$reply_data = array(
+				'post_parent'   => $topic_id, // topic ID
+				'post_status'   => bbp_get_public_status_id(),	// TODO: are other statuses applicable?
+				'post_type'     => bbp_get_reply_post_type(),
+				'post_author'   => $post_comment->user_id ,
+				'post_content'  => apply_filters( 'bbppt_imported_comment_content', $post_comment->comment_content, $post_comment ),
+				'post_date' 	=> $post_comment->comment_date,
+				'post_date_gmt' => $post_comment->comment_date_gmt,
+				'post_modified' => $post_comment->comment_date,
+				'post_modified_gmt'	=> $post_comment->comment_date_gmt
+			);
+			
+			// Reply meta
+			$reply_meta = array(
+				'author_ip' 			=> $post_comment->comment_author_IP,
+				'forum_id'  			=> $topic_forum,
+				'topic_id'  			=> $topic_id,
+				'imported_comment_id'	=> $post_comment->ID
+			);
+			
+			// If not registered user, add anonymous user information
+			if ( empty( $post_comment->user_id ) ) {
+				// Parse args
+				$anonymous = array(
+					'anonymous_name' => $post_comment->comment_author,
+					'anonymous_email'=> $post_comment->comment_author_email,
+					'anonymous_website' => $post_comment->comment_author_url
+				);
+				$reply_meta = wp_parse_args( $reply_meta, $anonymous );
+			}
+			
+			$reply_id = bbp_insert_reply( $reply_data, $reply_meta );
+			
+			do_action( 'bbppt_comment_imported', $post_comment, $post_id, $topic_id );
+			
+		}
+	}
 }
 
 ?>
