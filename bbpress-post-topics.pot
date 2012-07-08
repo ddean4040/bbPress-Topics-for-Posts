@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  \n"
 "Report-Msgid-Bugs-To: http://wordpress.org/tag/bbpress-post-topics\n"
-"POT-Creation-Date: 2012-02-05 01:17:53+00:00\n"
+"POT-Creation-Date: 2012-07-08 20:18:55+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -12,148 +12,164 @@ msgstr ""
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 
-#: index.php:27
+#: index.php:37
 msgid ""
 "bbPress Topics for Posts has been enabled, but cannot detect your bbPress "
 "setup."
 msgstr ""
 
-#: index.php:46
+#: index.php:55
 msgid ""
 "bbPress Topics for Posts has been enabled, but you have not created any "
 "forums yet."
 msgstr ""
 
-#: index.php:51
+#: index.php:60
 msgid "Use a bbPress forum topic for comments on this post."
 msgstr ""
 
-#: index.php:53
+#: index.php:63
 msgid "Use an existing topic:"
 msgstr ""
 
-#: index.php:53
+#: index.php:63
 msgid "Topic ID or slug"
 msgstr ""
 
-#: index.php:54
+#: index.php:64
 msgid "Create a new topic in forum:"
 msgstr ""
 
-#: index.php:56 index.php:379
+#: index.php:66 index.php:457
 msgid "Select a Forum"
 msgstr ""
 
-#: index.php:62
+#: index.php:76
+msgid "Copy post tags to new topic"
+msgstr ""
+
+#: index.php:78 index.php:85
+msgid "last copied %s ago"
+msgstr ""
+
+#: index.php:83
+msgid "Copy comments to bbPress topic"
+msgstr ""
+
+#: index.php:90
 msgid "Use default display settings"
 msgstr ""
 
-#: index.php:64 index.php:394
+#: index.php:92 index.php:467
 msgid "On the post page, show:"
 msgstr ""
 
-#: index.php:68 index.php:401
+#: index.php:96 index.php:474
 msgid "most recent"
 msgstr ""
 
-#: index.php:69 index.php:402
+#: index.php:97 index.php:475
 msgid "oldest"
 msgstr ""
 
-#: index.php:83 index.php:414
+#: index.php:111 index.php:487
 msgid "Entire topic"
 msgstr ""
 
-#: index.php:84 index.php:415
+#: index.php:112 index.php:488
 msgid "Replies only"
 msgstr ""
 
-#: index.php:85 index.php:416
+#: index.php:113 index.php:489
 msgid "Only the %s %s %s replies"
 msgstr ""
 
-#: index.php:86 index.php:417
+#: index.php:114 index.php:490
 msgid "A link to the topic"
 msgstr ""
 
-#: index.php:168
+#: index.php:219
 msgid ""
 "bbPress Topics for Posts cannot process this request because it cannot "
 "detect your bbPress setup."
 msgstr ""
 
-#: index.php:195
+#: index.php:247
 msgid "There was an error with your selected topic."
 msgstr ""
 
-#: index.php:195
+#: index.php:247
 msgid "Error Locating bbPress Topic"
 msgstr ""
 
-#: index.php:218
+#: index.php:284
 msgid "There was an error creating a new topic."
 msgstr ""
 
-#: index.php:218
+#: index.php:284
 msgid "Error Creating bbPress Topic"
 msgstr ""
 
-#: index.php:256 index.php:450
+#: index.php:336 index.php:523
 msgid "[See the full post at: <a href=\"%s\">%s</a>]"
 msgstr ""
 
-#: index.php:356
+#: index.php:434
 msgid "bbPress Topics for Posts Defaults"
 msgstr ""
 
-#: index.php:357
+#: index.php:435
 msgid "bbPress Topics for Posts Strings"
 msgstr ""
 
-#: index.php:367 index.php:440
+#: index.php:445 index.php:513
 msgid "You must install or enable bbPress to use this plugin."
 msgstr ""
 
-#: index.php:393
+#: index.php:462
 msgid "Create a new bbPress topic in %s %s for new posts"
 msgstr ""
 
-#: index.php:452
+#: index.php:465
+msgid "Copy post tags to new topics"
+msgstr ""
+
+#: index.php:525 index.php:688
 msgid "Follow this link to join the discussion"
 msgstr ""
 
-#: index.php:455
+#: index.php:528
 msgid "Post title"
 msgstr ""
 
-#: index.php:456
+#: index.php:529
 msgid "Post Permalink"
 msgstr ""
 
-#: index.php:457
+#: index.php:530
 msgid "Post author's display name"
 msgstr ""
 
-#: index.php:458
+#: index.php:531
 msgid "Post except (or a 150-character snippet)"
 msgstr ""
 
-#: index.php:459
+#: index.php:532
 msgid "Full post text"
 msgstr ""
 
-#: index.php:464
+#: index.php:537
 msgid "Content of topic first post:"
 msgstr ""
 
-#: index.php:468
+#: index.php:541
 msgid "Use the substitutions below:"
 msgstr ""
 
-#: index.php:474
+#: index.php:547
 msgid "Link text (when showing only a link to the topic):"
 msgstr ""
 
-#: index.php:476
+#: index.php:549
 msgid "Use %s to include the post name"
 msgstr ""

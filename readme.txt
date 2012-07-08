@@ -3,8 +3,8 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
-Tested up to: 3.4-beta3
-Stable tag: 1.2
+Tested up to: 3.4.1
+Stable tag: 1.3
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -34,6 +34,13 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 1. Comment bubble replaced with the number of forum posts
 
 == Changelog ==
+
+= 1.3 =
+* Added: support for copying existing comments to bbPress topic - thanks, javiarques!
+* Added: support for loading template files from theme directory
+* Changed: cleaned up the Discussion meta box a bit
+* Changed: moved away from $bbp since it has been dropped in bbPress 2.1
+* Fixed: not all forums appeared in dropdowns in some cases - thanks, javiarques
 
 = 1.2 =
 * Added: support for copying tags from post to topic
@@ -99,6 +106,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.3 =
+Bug fix for forum selection and: import existing comments, use your own copies of template files
 
 = 1.2 =
 New features! Better translation, XML-RPC support, can copy post tags to topics

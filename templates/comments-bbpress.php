@@ -10,7 +10,7 @@
 	<?php 
 		global $bbp;
 		
-		if(isset($bbp->shortcodes)) {
+		if( is_object($bbp) && isset($bbp->shortcodes) ) {
 			/** bbPress 2.0.x */
 			echo $bbp->shortcodes->display_topic(array('id'=>$bbp->topic_query->post->ID));
 		} else {

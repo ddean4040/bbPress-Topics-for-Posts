@@ -5,10 +5,10 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 1.3-testing
-Revision Date: 05/02/2012
+Version: 1.4-testing
+Revision Date: 07/08/2012
 Requires at least: WP 3.0, bbPress 2.0
-Tested up to: WP 3.4-beta3 , bbPress 2.1-r3773
+Tested up to: WP 3.4.1 , bbPress 2.1
 Author URI: http://www.generalthreat.com/
 */
 
@@ -20,6 +20,9 @@ if( file_exists( dirname( __FILE__ ) . '/' . dirname(plugin_basename(__FILE__)) 
 }
 
 class BBP_PostTopics {
+	
+	var $topic_ID = false;
+	var $xmlrpc_post = false;
 	
 	/**
 	 * Create the bbPress Topics for Posts meta box for post types defined by
@@ -73,8 +76,9 @@ class BBP_PostTopics {
 		?>
 		<br />
 		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic[enabled]" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
-		<div id="bbpress_topic_status_options" style="display: <?php echo checked($bbpress_topic_status, true, false) ? 'block' : 'none' ?>;">
-			 &mdash; <label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic[slug]" id="bbpress_topic_slug" placeholder="<?php _e( 'Topic ID or slug', 'bbpress-post-topics' ); ?>" value="<?php echo $bbpress_topic_slug ?>" <?php if( $bbpress_topic_options['forum_id'] ) echo ' disabled="true"'; ?> />
+		<div id="bbpress_topic_status_options" class="inside" style="display: <?php echo checked($bbpress_topic_status, true, false) ? 'block' : 'none' ?>;">
+			<h4>bbPress Topic Options</h4>
+			<label for="bbpress_topic_slug"><?php _e('Use an existing topic:', 'bbpress-post-topics' ) ?> </label> <input type="text" name="bbpress_topic[slug]" id="bbpress_topic_slug" placeholder="<?php _e( 'Topic ID or slug', 'bbpress-post-topics' ); ?>" value="<?php echo $bbpress_topic_slug ?>" <?php if( $bbpress_topic_options['forum_id'] ) echo ' disabled="true"'; ?> />
 			  - OR - <label for="bbpress_topic_forum"><?php _e('Create a new topic in forum:', 'bbpress-post-topics' ); ?></label>
 			<select name="bbpress_topic[forum_id]" id="bbpress_topic_forum">
 				<option value="0" selected><?php _e('Select a Forum', 'bbpress-post-topics' ); ?></option>
@@ -86,12 +90,23 @@ class BBP_PostTopics {
 				bbp_dropdown( $forum_dropdown_options ); 
 				?>
 			</select><br />
-			&mdash; <label for="bbpress_topic_copy_tags"><?php _e( 'Copy post tags to new topic', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[copy_tags]" id="bbpress_topic_copy_tags" <?php checked( $bbpress_topic_options['copy_tags']) ?> /><br />
+			
+			&mdash; <input type="checkbox" name="bbpress_topic[copy_tags]" id="bbpress_topic_copy_tags" <?php checked( $bbpress_topic_options['copy_tags'] ) ?> /> <label for="bbpress_topic_copy_tags"><?php _e( 'Copy post tags to new topic', 'bbpress-post-topics' ) ?></label>
+			<?php if( $import_date = get_post_meta( $post->ID, 'bbpress_discussion_tags_copied', true ) ) :
+				printf( '( ' . __( 'last copied %s ago', 'bbpress-post-topics' ) . ' )', human_time_diff( $import_date ) );
+			endif; ?>
+			<br />
+					
 			<?php if( wp_count_comments( $post->ID )->total_comments > 0 ) : ?>
-			&mdash; <label for="bbpress_topic_copy_comments"><?php _e( 'Copy comments to bbPress topic', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[copy_comments]" id="bbpress_topic_copy_comments" <?php checked( $bbpress_topic_options['copy_comments']) ?> /><br />
+				&mdash; <input type="checkbox" name="bbpress_topic[copy_comments]" id="bbpress_topic_copy_comments" <?php checked( $bbpress_topic_options['copy_comments'] ) ?> /> <label for="bbpress_topic_copy_comments"><?php _e( 'Copy comments to bbPress topic', 'bbpress-post-topics' ) ?></label>
+				<?php if( $import_date = get_post_meta( $post->ID, 'bbpress_discussion_comments_copied', true ) ) :
+					printf( '( ' . __( 'last copied %s ago', 'bbpress-post-topics' ) . ' )', human_time_diff( $import_date ) );
+				endif; ?>
+				<br />
 			<?php endif; ?>
-			&mdash; <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label> <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults']) ?> />
-			<div id="bbpress_topic_display_options"  style="display: <?php echo checked($bbpress_topic_options['use_defaults'], true, false) ? 'none' : 'block' ?>; border-left: 1px solid #ccc; margin-left: 9px; padding-left: 5px;">
+			
+			&mdash; <input type="checkbox" name="bbpress_topic[use_defaults]" id="bbpress_topic_use_defaults" <?php checked( $bbpress_topic_options['use_defaults'] ) ?> /> <label for="bbpress_topic_use_defaults"><?php _e( 'Use default display settings', 'bbpress-post-topics' ) ?></label>
+			<div id="bbpress_topic_display_options"  style="display: <?php echo checked( $bbpress_topic_options['use_defaults'], true, false ) ? 'none' : 'block' ?>; border-left: 1px solid #ccc; margin-left: 9px; padding-left: 5px;">
 				<label for=""><?php _e( 'On the post page, show:', 'bbpress-post-topics' ); ?></label><br />
 				<?php
 				
@@ -164,10 +179,11 @@ class BBP_PostTopics {
 		$post = $the_post;
 	}
 	
+	/**
+	 * Note XMLRPC invocation so we can apply defaults to any posts created during this request
+	 */
 	function catch_xmlrpc_post( $callname ) {
-		
 		$this->xmlrpc_post = true;
-		
 	}
 	
 	/**
@@ -196,7 +212,7 @@ class BBP_PostTopics {
 		 * If this is an XMLRPC post, we have to use the defaults.
 		 * Otherwise, check the POST for any custom settings
 		 */
-		if( isset( $this->xmlrpc_post ) ) {
+		if( $this->xmlrpc_post ) {
 			$bbppt_options = get_option( 'bbpress_discussion_defaults' );
 			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'on' );
 			$use_defaults = true;
@@ -255,6 +271,13 @@ class BBP_PostTopics {
 						$post_tags = wp_get_post_tags( $post_ID );
 						$post_tags = array_map( create_function( '$term', 'return $term->name;' ), $post_tags );
 						wp_set_post_terms( $topic_ID, join(',',$post_tags), bbp_get_topic_tag_tax_id(), true );
+						update_post_meta( $post_ID, 'bbpress_discussion_tags_copied', time() );
+					}
+					
+					/** Export comments from the post to the new bbPress topic */
+					if( $bbppt_options['copy_comments'] ) {
+						bbppt_import_comments( $post_ID, $topic_ID );
+						update_post_meta( $post_ID, 'bbpress_discussion_comments_copied', time() );
 					}
 					
 					if( $use_defaults ) {
@@ -272,7 +295,7 @@ class BBP_PostTopics {
 
 				$new_topic = $this->build_new_topic( $post, $topic_forum );
 				
-				if(!$new_topic) {
+				if( ! $new_topic ) {
 					// return an error of some kind
 					wp_die(__('There was an error creating a new topic.','bbpress-post-topics'),__('Error Creating bbPress Topic','bbpress-post-topics'));
 				} else {
@@ -284,6 +307,13 @@ class BBP_PostTopics {
 						$post_tags = wp_get_post_tags( $post_ID );
 						$post_tags = array_map( create_function( '$term', 'return $term->name;' ), $post_tags );
 						wp_set_post_terms( $new_topic, join(',',$post_tags), bbp_get_topic_tag_tax_id(), false );
+						update_post_meta( $post_ID, 'bbpress_discussion_tags_copied', time() );
+					}
+					
+					/** Export comments from the post to the new bbPress topic */
+					if( $bbppt_options['copy_comments'] ) {
+						bbppt_import_comments( $post_ID, $new_topic );
+						update_post_meta( $post_ID, 'bbpress_discussion_comments_copied', time() );
 					}
 					
 					if( $use_defaults ) {
@@ -357,37 +387,35 @@ class BBP_PostTopics {
 
 		global $post, $bbp;
 
-		if(!function_exists('bbp_has_forums'))	return $template;
+		if( ! function_exists( 'bbp_has_forums' ) )	return $template;
 		
 		if( get_post_meta( $post->ID, 'use_bbpress_discussion_topic', true ) ) {
 			
 			$topic_ID = get_post_meta( $post->ID, 'bbpress_discussion_topic_id', true);
-			 
-			if( file_exists( dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php' ) ) {
-				
-				$bbp->topic_query->post->ID = $topic_ID;
-				
-				/** Handle posts where defaults were kept */
-				$settings = $this->get_topic_options_for_post( $post->ID );
-				
-				switch($settings['display']) {
-					case 'topic':
-				 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
-						break;
-					case 'xreplies':
-						add_filter( 'bbp_has_replies_query', 'bbppt_limit_replies_in_thread');
-					case 'replies':
-						add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
-				 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
-						break;
-					case 'link':
-				 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress-link.php';
-						break;
-					default:
-						return apply_filters( 'bbppt_template_display_format_' . $settings['display'], $template, $settings );
-						break;
-				}
-		 		return dirname( __FILE__ ) . '/templates/' . 'comments-bbpress.php';
+			$this->topic_ID = $topic_ID;
+
+			// Since bbPress has removed the $bbp global, use of this property is deprecated
+			$bbp->topic_query->post->ID = $topic_ID;
+			
+			/** Handle posts where defaults were kept */
+			$settings = $this->get_topic_options_for_post( $post->ID );
+			
+			switch($settings['display']) {
+				case 'topic':
+			 		return bbppt_locate_template('comments-bbpress.php');
+					break;
+				case 'xreplies':
+					add_filter( 'bbp_has_replies_query', 'bbppt_limit_replies_in_thread');
+				case 'replies':
+					add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
+			 		return bbppt_locate_template('comments-bbpress.php');
+					break;
+				case 'link':
+			 		return bbppt_locate_template( 'comments-bbpress-link.php' );
+					break;
+				default:
+					return apply_filters( 'bbppt_template_display_format_' . $settings['display'], $template, $settings );
+					break;
 			}
 		}
 		return $template;
@@ -437,23 +465,14 @@ class BBP_PostTopics {
 		
 		$ex_options = get_option( 'bbpress_discussion_defaults' );
 		
-		/** Build a list of all forums to use in a select box */
-		add_filter( 'bbp_has_forums_query', 'bbppt_remove_parent_forum_restriction' );
-		$forums = bbp_has_forums();
-	
-		$forum_options = array();
-		$forum_options[0] = __('Select a Forum','bbpress-post-topics');
-		while ( bbp_forums() ) : bbp_the_forum();
-			if(bbp_is_forum_category())	continue;
-			$forum_options[bbp_get_forum_id()] = (bbppt_get_forum_parent_id() ? ' &mdash; ' : '') . bbp_get_forum_title();
-		endwhile;
-		
+		$forum_dropdown_options = array(
+			'selected'		=> $ex_options['forum_id'],
+			'options_only'	=> true
+		);
 		$forum_select_string = '<select name="bbpress_discussion_defaults[forum_id]" id="bbpress_discussion_defaults_forum_id">';
-		foreach($forum_options as $forum_ID => $forum_name) {
-			$forum_select_string .= '<option value="' . $forum_ID . '" ' . selected( $ex_options['forum_id'], $forum_ID, false ) . '>' . $forum_name . '</option>';
-		}
+		$forum_select_string .= '<option value="0">' . __('Select a Forum','bbpress-post-topics') . '</option>';
+		$forum_select_string .= bbp_get_dropdown( $forum_dropdown_options ); 
 		$forum_select_string .= '</select>';
-		
 		?>
 		<input type="checkbox" name="bbpress_discussion_defaults[enabled]" id="bbpress_discussion_defaults_enabled" <?php checked($ex_options['enabled'],'on') ?>>
 		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
@@ -701,7 +720,7 @@ function bbppt_activate() {
  */
 function bbppt_get_topic_by_slug( $slug ) {
 	
-	global $bbp, $wpdb;
+	global $wpdb;
 	
 	$topic = $wpdb->get_row( $wpdb->prepare('SELECT ID, post_name, post_parent FROM ' . $wpdb->posts .  ' WHERE post_name = %s AND post_type = %s', $slug, bbp_get_topic_post_type()) );
 	
@@ -761,6 +780,24 @@ function bbppt_limit_replies_in_thread( $bbp_args ) {
 	
 }
 
+/**
+ * Locate a template file for bbPress Topics for Posts
+ * Search child and parent theme directories before falling back to files included with plugin
+ */
+function bbppt_locate_template( $template_name, $load = false ) {
+	
+	$located = '';
+	if( $located = locate_template( apply_filters( 'bbppt_template_name', '/bbpress/' . $template_name, $template_name ) ) ) {
+		
+	} else if( file_exists(  dirname( __FILE__ ) . '/templates/' . $template_name ) ) {
+		$located = dirname( __FILE__ ) . '/templates/' . $template_name;
+	}
+	
+	if( $load && $located && $located != '' ) {
+		load_template( $located );
+	}
+	return $located;
+}
 
 /**
  * Create bbPress replies with already existing comments
@@ -769,8 +806,10 @@ function bbppt_limit_replies_in_thread( $bbp_args ) {
  * @param int $post_id
  * @param int $topic_id
  */
-//function bbppt_import_comments( $post_id, $topic_id, $topic_forum ) {
-function export_comments_to_bbpress ( $post_id, $topic_id, $topic_forum ) {
+function bbppt_import_comments( $post_id, $topic_id ) {
+//function export_comments_to_bbpress ( $post_id, $topic_id, $topic_forum ) {
+	
+	$topic_forum = bbp_get_topic_forum_id( $topic_id );
 	
 	/** getting post comments */
 	$post_comments = get_comments( array( 'post_id' => $post_id, 'order' => 'ASC' ) );
@@ -782,12 +821,11 @@ function export_comments_to_bbpress ( $post_id, $topic_id, $topic_forum ) {
 				continue;
 			}
 			
-			/** Allow individual comments to be skipped */
-			if( ! apply_filters( 'bbppt_do_import_comment', true, $post_comment ) )	continue;
+			/** Allow individual comments to be skipped with `bbppt_do_import_comment` filter
+			 *  By default, skip comments that have already been imported
+			 */
+			if( ! apply_filters( 'bbppt_do_import_comment', ! get_comment_meta( $post_comment->comment_ID, 'bbppt_imported', true ), $post_comment ) )	continue;
 
-			// TODO: check for reply with imported_comment_id meta_key to prevent duplicate replies
-			// when updating post topic options
-			
 			// If user is not registered
 			if ( empty( $post_comment->user_id ) ) {
 				
@@ -819,7 +857,7 @@ function export_comments_to_bbpress ( $post_id, $topic_id, $topic_forum ) {
 				'author_ip' 			=> $post_comment->comment_author_IP,
 				'forum_id'  			=> $topic_forum,
 				'topic_id'  			=> $topic_id,
-				'imported_comment_id'	=> $post_comment->ID
+				'imported_comment_id'	=> $post_comment->comment_ID
 			);
 			
 			// If not registered user, add anonymous user information
@@ -834,6 +872,8 @@ function export_comments_to_bbpress ( $post_id, $topic_id, $topic_forum ) {
 			}
 			
 			$reply_id = bbp_insert_reply( $reply_data, $reply_meta );
+			
+			update_comment_meta( $post_comment->comment_ID, 'bbppt_imported', true );
 			
 			do_action( 'bbppt_comment_imported', $post_comment, $post_id, $topic_id );
 			
