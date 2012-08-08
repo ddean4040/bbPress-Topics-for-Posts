@@ -65,6 +65,9 @@ class BBP_PostTopics {
 		if($bbpress_topic_slug) {
 			$bbpress_topic = bbp_get_topic( $bbpress_topic_slug);
 			$bbpress_topic_slug = $bbpress_topic->post_name;
+			
+			/** If a topic already exists, don't select default forum */
+			$bbpress_topic_options['forum_id'] = 0;
 		}
 		
 		$forums = bbp_has_forums();
