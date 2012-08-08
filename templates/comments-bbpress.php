@@ -10,6 +10,9 @@
 	<?php 
 		global $bbp;
 		
+		/** Fix pagination for replies */
+		add_filter( 'bbp_replies_pagination', create_function( '$args', '$args["base"] = add_query_arg( "paged", "%#%" ); return $args;') );
+		
 		if( is_object($bbp) && isset($bbp->shortcodes) ) {
 			/** bbPress 2.0.x */
 			echo $bbp->shortcodes->display_topic(array('id'=>$bbp->topic_query->post->ID));
