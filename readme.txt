@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDC
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
 Tested up to: 3.4.1
-Stable tag: 1.3
+Stable tag: 1.4
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
