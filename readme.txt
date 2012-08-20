@@ -35,6 +35,11 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 
 == Changelog ==
 
+= 1.4 =
+* Fixed: duplicate topics created when updating posts with a default forum set - thanks, nchiari
+* Fixed: could not access multiple pages of replies from post - thanks, oddcopter
+* Added: bulk create topics for existing posts from the Discussion settings page
+
 = 1.3 =
 * Added: support for copying existing comments to bbPress topic - thanks, javiarques!
 * Added: support for loading template files from theme directory
@@ -106,6 +111,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.4 =
+Bug fix for duplicate topics, pagination issues; added bulk processing of existing posts
 
 = 1.3 =
 Bug fix for forum selection and: import existing comments, use your own copies of template files

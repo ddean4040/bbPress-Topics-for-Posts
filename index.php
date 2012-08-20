@@ -8,11 +8,12 @@ Author: David Dean
 Version: 1.4-testing
 Revision Date: 07/08/2012
 Requires at least: WP 3.0, bbPress 2.0
-Tested up to: WP 3.4.1 , bbPress 2.1
+Tested up to: WP 3.4.1 , bbPress 2.1.2
 Author URI: http://www.generalthreat.com/
 */
 
 include dirname( __FILE__ ) . '/compatibility.php';
+include dirname( __FILE__ ) . '/ajax.php';
 
 /** load localization files if present */
 if( file_exists( dirname( __FILE__ ) . '/' . dirname(plugin_basename(__FILE__)) . '-' . get_locale() . '.mo' ) ) {
@@ -220,6 +221,7 @@ class BBP_PostTopics {
 			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'on' );
 			$use_defaults = true;
 		} else {
+			
 			if( isset($_POST['bbpress_topic']) && $_POST['bbpress_topic']['enabled'] == 'open' ) {
 				$bbppt_options = $_POST['bbpress_topic'];
 				$create_topic = true;
@@ -452,6 +454,12 @@ class BBP_PostTopics {
 		register_setting( 'discussion', 'bbpress_discussion_text', array( &$this, 'sanitize_text_settings' ) );
 		add_settings_field( 'bbpress_discussion_defaults', __('bbPress Topics for Posts Defaults','bbpress-post-topics'), array(&$this,'general_discussion_settings'), 'discussion', 'default', array('label_for'=>'bbpress_discussion_defaults_enabled') );
 		add_settings_field( 'bbpress_discussion_text', __('bbPress Topics for Posts Strings','bbpress-post-topics'), array(&$this,'general_discussion_text_settings'), 'discussion', 'default' );
+		
+		wp_register_script( 'bbppt-admin-script', WP_PLUGIN_URL . '/bbpress-post-topics/inc/bbppt-admin.js', array('jquery') );
+		wp_localize_script( 'bbppt-admin-script', 'bbPPTStrings', array(
+			'disabledTitle'	=> __('Disabled - save changes or reload to enable','bbpress-post-topics'),
+			'imgSrc'		=> ADMIN_COOKIE_PATH . '/images/wpspin_light.gif'
+		));
 	}
 	
 	/**
@@ -459,12 +467,16 @@ class BBP_PostTopics {
 	 */
 	function general_discussion_settings() {
 		
+		?><div id="bbppt-discussion-settings"><?php
+		
 		if( ! function_exists( 'bbp_has_forums' ) ) {
 			?>
 			<p><?php _e( 'You must install or enable bbPress to use this plugin.', 'bbpress-post-topics' ); ?></p>
 			<?php
 			return;
 		}
+		
+		wp_enqueue_script('bbppt-admin-script');
 		
 		$ex_options = get_option( 'bbpress_discussion_defaults' );
 		
@@ -478,7 +490,12 @@ class BBP_PostTopics {
 		$forum_select_string .= '</select>';
 		?>
 		<input type="checkbox" name="bbpress_discussion_defaults[enabled]" id="bbpress_discussion_defaults_enabled" <?php checked($ex_options['enabled'],'on') ?>>
-		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?><br />
+		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?> 
+
+		<?php if($ex_options['enabled'] == 'on') : ?>
+		&mdash; <a class="button" id="create_topics" href="#" title="Create a topic with these settings for all posts without topics"><?php _e('Create topics for existing posts', 'bbpress-post-topics'); ?></a>
+		<?php endif; ?>
+		<br />
 
 		<input type="checkbox" name="bbpress_discussion_defaults[copy_tags]" id="bbpress_discussion_defaults_copy_tags" <?php checked($ex_options['copy_tags'],'on') ?>>
 		<label for="bbpress_discussion_defaults_copy_tags"><?php _e('Copy post tags to new topics','bbpress-post-topics'); ?></label><br />
@@ -520,12 +537,16 @@ class BBP_PostTopics {
 		
 		do_action( 'bbppt_display_options_fields', 0 );
 		
+		?></div><?php
+		
 	}
 	
 	/**
 	 * Section for setting strings for new topics and link
 	 */
 	function general_discussion_text_settings() {
+
+		?><div id="bbppt-discussion-text-settings"><?php
 
 		if( ! function_exists( 'bbp_has_forums' ) ) {
 			?>
@@ -569,6 +590,8 @@ class BBP_PostTopics {
 		<?php
 
 		do_action( 'bbppt_display_text_options_fields', 0 );
+
+		?></div><?php
 
 	}
 	
@@ -882,6 +905,42 @@ function bbppt_import_comments( $post_id, $topic_id ) {
 			
 		}
 	}
+}
+
+/**
+ * Process existing posts with default topic settings -- unless they have an associated topic
+ */
+function bbppt_process_existing_posts() {
+	
+	global $bbp_post_topics;
+	
+	// Force use of defaults
+	$bbp_post_topics->xmlrpc_post = true;
+	
+	$offset = 0;
+	
+	do {
+		$posts = get_posts(
+			array(
+				'numberposts'	=> 1000,
+				'offset'		=> $offset
+			)
+		);
+		
+		if( $posts ) {
+			foreach($posts as $post) {
+				if( ! get_post_meta( $post->ID, 'bbpress_discussion_topic_id' ) ) {
+					$bbp_post_topics->process_topic_option( $post->ID, $post );
+				}
+			}
+			$offset += 1000;
+			
+		}
+	
+	} while( $posts != null );
+	
+	return true;
+	
 }
 
 ?>
