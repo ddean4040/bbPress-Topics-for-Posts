@@ -833,7 +833,6 @@ function bbppt_locate_template( $template_name, $load = false ) {
  * @param int $topic_id
  */
 function bbppt_import_comments( $post_id, $topic_id ) {
-//function export_comments_to_bbpress ( $post_id, $topic_id, $topic_forum ) {
 	
 	$topic_forum = bbp_get_topic_forum_id( $topic_id );
 	
@@ -923,7 +922,8 @@ function bbppt_process_existing_posts() {
 		$posts = get_posts(
 			array(
 				'numberposts'	=> 1000,
-				'offset'		=> $offset
+				'offset'		=> $offset,
+				'post_type'		=> apply_filters( 'bbppt_eligible_post_types', array( 'post', 'page' ) )
 			)
 		);
 		
