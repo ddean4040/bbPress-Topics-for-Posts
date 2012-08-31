@@ -374,7 +374,9 @@ class BBP_PostTopics {
 			'post_parent'   => (int)$topic_forum,
 			'post_author'   => $post->post_author,
 			'post_content'  => $topic_content,
-			'post_title'    => $post->post_title
+			'post_title'    => $post->post_title,
+			'post_date'		=> $post->post_date,
+			'post_date_gmt'	=> $post->post_date_gmt
 		);
 		
 		$new_topic_meta = array(
@@ -849,7 +851,8 @@ function bbppt_import_comments( $post_id, $topic_id ) {
 			/** Allow individual comments to be skipped with `bbppt_do_import_comment` filter
 			 *  By default, skip comments that have already been imported
 			 */
-			if( ! apply_filters( 'bbppt_do_import_comment', ! get_comment_meta( $post_comment->comment_ID, 'bbppt_imported', true ), $post_comment ) )	continue;
+			if( ! apply_filters( 'bbppt_do_import_comment', ! get_comment_meta( $post_comment->comment_ID, 'bbppt_imported', true ), $post_comment ) )
+				continue;
 
 			// If user is not registered
 			if ( empty( $post_comment->user_id ) ) {
