@@ -13,6 +13,7 @@ Author URI: http://www.generalthreat.com/
 */
 
 include dirname( __FILE__ ) . '/compatibility.php';
+include dirname( __FILE__ ) . '/template.php';
 include dirname( __FILE__ ) . '/ajax.php';
 
 /** load localization files if present */
@@ -203,10 +204,6 @@ class BBP_PostTopics {
 		if( $post->post_status == 'auto-draft' )
 			return;
 
-		/** Only process when the post is published */
-		if( ! in_array( $post->post_status, apply_filters( 'bbppt_eligible_post_status', array( 'publish' ) ) ) )
-			return;
-		
 		/** Only process for post types we specify */
 		if( !in_array( $post->post_type, apply_filters( 'bbppt_eligible_post_types', array( 'post', 'page' ) ) ) ) {
 			return;			
@@ -217,20 +214,46 @@ class BBP_PostTopics {
 		 * Otherwise, check the POST for any custom settings
 		 */
 		if( $this->xmlrpc_post ) {
+			
 			$bbppt_options = get_option( 'bbpress_discussion_defaults' );
 			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'on' );
 			$use_defaults = true;
-		} else {
 			
-			if( isset($_POST['bbpress_topic']) && $_POST['bbpress_topic']['enabled'] == 'open' ) {
+		} else if( isset( $_POST['bbpress_topic'] ) ) {
+			
+			if( $_POST['bbpress_topic']['enabled'] == 'open' ) {
+				
 				$bbppt_options = $_POST['bbpress_topic'];
 				$create_topic = true;
-				$use_defaults = isset($bbppt_options['use_defaults']);
+				$use_defaults = isset( $bbppt_options['use_defaults'] );
+				
 			} else {
+				
 				$create_topic = false;
+				
 			}
 			
+		} else if( $this->has_draft_settings( $post ) ) {
+			
+			$bbppt_options = $this->get_draft_settings( $post );
+			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'open' );
+			$use_defaults = isset( $bbppt_options['use_defaults'] );
+			
+		} else {
+			
+			$create_topic = false;
+			
 		}
+
+		/** If post is saved as a draft, store selected settings for publication later */
+		if( in_array( $post->post_status, apply_filters( 'bbppt_draft_post_status', array( 'draft', 'future' ) ) ) ) {
+			$this->set_draft_settings( $bbppt_options, $post );
+			return;
+		}
+
+		/** Only process further when the post is published */
+		if( ! in_array( $post->post_status, apply_filters( 'bbppt_eligible_post_status', array( 'publish' ) ) ) )
+			return;
 		
 		/**
 		 * The user requested to use a bbPress topic for discussion
@@ -255,6 +278,7 @@ class BBP_PostTopics {
 			}
 			
 			if( ! empty( $topic_slug ) ) {
+				
 				/** if user has selected an existing topic */
 				
 				if(is_numeric($topic_slug)) {
@@ -294,30 +318,31 @@ class BBP_PostTopics {
 					}
 					
 				}
+				do_action( 'bbppt_topic_assigned', $post_ID, $topic_ID );
 				
 			} else if($topic_forum != 0) {
 				/** if user has opted to create a new topic */
 
-				$new_topic = $this->build_new_topic( $post, $topic_forum );
+				$topic_ID = $this->build_new_topic( $post, $topic_forum );
 				
-				if( ! $new_topic ) {
+				if( ! $topic_ID ) {
 					// return an error of some kind
 					wp_die(__('There was an error creating a new topic.','bbpress-post-topics'),__('Error Creating bbPress Topic','bbpress-post-topics'));
 				} else {
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
-					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $new_topic );
+					update_post_meta( $post_ID, 'bbpress_discussion_topic_id', $topic_ID );
 
 					/** Update topic with tags from the post */
 					if( $bbppt_options['copy_tags'] ) {
 						$post_tags = wp_get_post_tags( $post_ID );
 						$post_tags = array_map( create_function( '$term', 'return $term->name;' ), $post_tags );
-						wp_set_post_terms( $new_topic, join(',',$post_tags), bbp_get_topic_tag_tax_id(), false );
+						wp_set_post_terms( $topic_ID, join(',',$post_tags), bbp_get_topic_tag_tax_id(), false );
 						update_post_meta( $post_ID, 'bbpress_discussion_tags_copied', time() );
 					}
 					
 					/** Export comments from the post to the new bbPress topic */
 					if( $bbppt_options['copy_comments'] ) {
-						bbppt_import_comments( $post_ID, $new_topic );
+						bbppt_import_comments( $post_ID, $topic_ID );
 						update_post_meta( $post_ID, 'bbpress_discussion_comments_copied', time() );
 					}
 					
@@ -329,6 +354,7 @@ class BBP_PostTopics {
 					}
 					
 				}
+				do_action( 'bbppt_topic_created', $post_ID, $topic_ID );
 				
 			}
 		} else {
@@ -338,10 +364,16 @@ class BBP_PostTopics {
 			delete_post_meta( $post_ID, 'bbpress_discussion_display_format' );
 			delete_post_meta( $post_ID, 'bbpress_discussion_display_extras' );
 		}
+		
+		$this->delete_draft_settings( $post_ID );
+		do_action( 'bbppt_topic_associated', $post_ID, $topic_ID );
+		
 	}
 	
 	/**
 	 * Create the new topic when selected, including shortcode substitution
+	 * @param WP_Post $post post object to associate with new topic
+	 * @param int $topic_forum ID of forum to hold new topic
 	 */
 	function build_new_topic( $post, $topic_forum ) {
 
@@ -433,14 +465,44 @@ class BBP_PostTopics {
 	 */
 	function maybe_change_comments_number( $number, $post_ID ) {
 		
-		if(!function_exists('bbp_has_forums'))	return $number;
+		if( ! function_exists( 'bbp_has_forums' ) )	return $number;
 		
-		if(get_post_meta( $post_ID, 'use_bbpress_discussion_topic', true)) {
-			$topic_ID = get_post_meta( $post_ID, 'bbpress_discussion_topic_id', true);
+		if( get_post_meta( $post_ID, 'use_bbpress_discussion_topic', true ) ) {
+			$topic_ID = get_post_meta( $post_ID, 'bbpress_discussion_topic_id', true );
 			return bbp_get_topic_reply_count( $topic_ID );
 		}
 		
 		return $number;
+	}
+
+	/**
+	 * Delete the bbPress topic associated with a post being deleted unless:
+	 *  - that topic is also associated with another post
+	 *  - cancelled by 'bbppt_do_delete_topic' filter
+	 * @param int post_ID ID of the post being deleted
+	 */
+	function maybe_delete_topic( $post_ID ) {
+		
+		if( get_post_meta( $post_ID, 'use_bbpress_discussion_topic', true ) ) {
+			
+			$topic_ID = get_post_meta( $post_ID, 'bbpress_discussion_topic_id', true );
+			
+			$affected_posts = get_posts(
+				array(
+					'post_type'		=> apply_filters( 'bbppt_eligible_post_types', array( 'post', 'page' ) ),
+					'meta_key'		=> 'bbpress_discussion_topic_id',
+					'meta_value'	=> $topic_ID
+				)
+			);
+			
+			if( count( $affected_posts ) == 1 && apply_filters( 'bbppt_do_delete_topic', true, $topic_ID ) ) {
+				
+				// Delete topic
+				bbp_delete_topic( $topic_ID );
+				
+			}
+			
+		}		
 	}
 	
 	
@@ -630,7 +692,14 @@ class BBP_PostTopics {
 
 		$strings  = get_option( 'bbpress_discussion_text' );
 		
-		if(
+		$draft_settings = $this->get_draft_settings( $ID );
+		
+		if( $draft_settings && $draft_settings['enabled'] && ! $draft_settings['use_defaults'] ) {
+			
+			/** Post has draft settings saved */
+			$options = $draft_settings;
+			
+		} else if(
 			get_post_meta( $ID, 'bbpress_discussion_use_defaults', true ) || 
 			! get_post_meta( $ID, 'bbpress_discussion_topic_id', true )
 		) {
@@ -691,7 +760,43 @@ class BBP_PostTopics {
 		return $options;
 		
 	}
+
+	/** Functions for managing options for posts that have not been published */
 	
+	function has_draft_settings( $post = null ) {
+	
+		$post = get_post( $post );
+		if( ! is_object( $post ) )	return false;
+		
+		return get_post_meta( $post->ID, 'bbppt_draft_settings', true );
+		
+	}
+	
+	function get_draft_settings( $post = null ) {
+	
+		return $this->has_draft_settings( $post );
+		
+	}
+	
+	function set_draft_settings( $settings, $post = null ) {
+	
+		$post = get_post( $post );
+		if( ! is_object( $post ) )	return false;
+		
+		update_post_meta( $post->ID, 'bbppt_draft_settings', $settings );
+		
+	}
+	
+	function delete_draft_settings( $post = null ) {
+		
+		$post = get_post( $post );
+		if( ! is_object( $post ) )	return false;
+		
+		return delete_post_meta( $post->ID, 'bbppt_draft_settings', true );
+		
+	}
+
+
 }
 
 $bbp_post_topics = new BBP_PostTopics;
@@ -701,6 +806,7 @@ add_action( 'post_comment_status_meta_box-options', array( &$bbp_post_topics, 'd
 add_action( 'save_post', 			array( &$bbp_post_topics, 'process_topic_option' ), 10, 2 );
 add_action( 'admin_init', 			array( &$bbp_post_topics, 'add_discussion_page_settings' ) );
 add_action( 'xmlrpc_call', 			array( &$bbp_post_topics, 'catch_xmlrpc_post' ) );
+add_action( 'before_delete_post',	array( &$bbp_post_topics, 'maybe_delete_topic' ) );
 add_filter( 'comments_template', 	array( &$bbp_post_topics, 'maybe_change_comments_template' ) );
 add_filter( 'get_comments_number', 	array( &$bbp_post_topics, 'maybe_change_comments_number' ), 10, 2 );
 
