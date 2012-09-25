@@ -519,7 +519,7 @@ class BBP_PostTopics {
 		add_settings_field( 'bbpress_discussion_defaults', __('bbPress Topics for Posts Defaults','bbpress-post-topics'), array(&$this,'general_discussion_settings'), 'discussion', 'default', array('label_for'=>'bbpress_discussion_defaults_enabled') );
 		add_settings_field( 'bbpress_discussion_text', __('bbPress Topics for Posts Strings','bbpress-post-topics'), array(&$this,'general_discussion_text_settings'), 'discussion', 'default' );
 		
-		wp_register_script( 'bbppt-admin-script', WP_PLUGIN_URL . '/bbpress-post-topics/inc/bbppt-admin.js', array('jquery') );
+		wp_register_script( 'bbppt-admin-script', plugins_url( 'inc/bbppt-admin.js', __FILE__ ), array('jquery') );
 		wp_localize_script( 'bbppt-admin-script', 'bbPPTStrings', array(
 			'disabledTitle'	=> __('Disabled - save changes or reload to enable','bbpress-post-topics'),
 			'imgSrc'		=> ADMIN_COOKIE_PATH . '/images/wpspin_light.gif'
@@ -563,6 +563,9 @@ class BBP_PostTopics {
 
 		<input type="checkbox" name="bbpress_discussion_defaults[copy_tags]" id="bbpress_discussion_defaults_copy_tags" <?php checked($ex_options['copy_tags'],'on') ?>>
 		<label for="bbpress_discussion_defaults_copy_tags"><?php _e('Copy post tags to new topics','bbpress-post-topics'); ?></label><br />
+
+		<input type="checkbox" name="bbpress_discussion_defaults[copy_comments]" id="bbpress_discussion_defaults_copy_comments" <?php checked($ex_options['copy_comments'],'on') ?>>
+		<label for="bbpress_discussion_defaults_copy_comments"><?php _e('Copy post comments to new topics (when available)','bbpress-post-topics'); ?></label><br />
 
 		<label for=""><?php _e( 'On the post page, show:', 'bbpress-post-topics' ); ?></label><br />
 		<?php
@@ -934,11 +937,11 @@ function bbppt_locate_template( $template_name, $load = false ) {
 }
 
 /**
- * Create bbPress replies with already existing comments
+ * Create bbPress replies with existing comments on a post
  * 
  * @author javiarques
- * @param int $post_id
- * @param int $topic_id
+ * @param int $post_id ID of the post whose comments to import to topic
+ * @param int $topic_id ID of the topic where comments will be added as replies
  */
 function bbppt_import_comments( $post_id, $topic_id ) {
 	
