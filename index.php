@@ -80,6 +80,7 @@ class BBP_PostTopics {
 		} 
 		?>
 		<br />
+		<input type="hidden" name="bbpress_topic[form_displayed]" value="true" />
 		<label for="bbpress_topic_status" class="selectit"><input name="bbpress_topic[enabled]" type="checkbox" id="bbpress_topic_status" value="open" <?php checked($bbpress_topic_status); ?> /> <?php _e( 'Use a bbPress forum topic for comments on this post.', 'bbpress-post-topics' ); ?></label><br />
 		<div id="bbpress_topic_status_options" class="inside" style="display: <?php echo checked($bbpress_topic_status, true, false) ? 'block' : 'none' ?>;">
 			<h4>bbPress Topic Options</h4>
@@ -209,39 +210,65 @@ class BBP_PostTopics {
 			return;			
 		}
 		
-		/**
-		 * If this is an XMLRPC post, we have to use the defaults.
-		 * Otherwise, check the POST for any custom settings
-		 */
-		if( $this->xmlrpc_post ) {
-			
-			$bbppt_options = get_option( 'bbpress_discussion_defaults' );
-			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'on' );
-			$use_defaults = true;
-			
-		} else if( isset( $_POST['bbpress_topic'] ) ) {
+		// TODO: combine existing topic and draft settings branches
+		
+		if( isset( $_POST['bbpress_topic'] ) ) {
+			/**
+			 * Post was created through the full post editor form
+ 			 * Check the POST for settings
+			 */
 			
 			if( $_POST['bbpress_topic']['enabled'] == 'open' ) {
 				
 				$bbppt_options = $_POST['bbpress_topic'];
 				$create_topic = true;
 				$use_defaults = isset( $bbppt_options['use_defaults'] );
+
+				bbppt_debug( 'Processing a topic for regular post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
+				bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );
 				
 			} else {
 				
 				$create_topic = false;
+				bbppt_debug( 'NOT creating a topic for regular post ' . $post_ID );
 				
 			}
 			
-		} else if( $this->has_draft_settings( $post ) ) {
+		} else if( get_post_meta( $post_ID, 'bbpress_discussion_topic_id', true ) ) {
+			/**
+			 * If post has an existing topic, use its settings
+			 */
 			
+			$bbppt_options = $this->get_topic_options_for_post( $post_ID );
+			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] );
+			$use_defaults = ( isset( $bbppt_options['use_defaults'] ) && $bbppt_options['use_defaults'] );
+			
+			bbppt_debug( 'Processing topic for existing post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
+			bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );
+			
+		} else if( $this->has_draft_settings( $post ) ) {
+			/**
+			 * If the post has draft settings saved, use draft settings
+			 */
+		
 			$bbppt_options = $this->get_draft_settings( $post );
 			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'open' );
-			$use_defaults = isset( $bbppt_options['use_defaults'] );
+			$use_defaults = ( isset( $bbppt_options['use_defaults'] ) && $bbppt_options['use_defaults'] );
+			
+			bbppt_debug( 'Processing a topic for draft post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
+			bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );
 			
 		} else {
+			/**
+			 * Post was created through some other means (including XML-RPC) - use defaults
+			 */
 			
-			$create_topic = false;
+			$bbppt_options = get_option( 'bbpress_discussion_defaults' );
+			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'on' );
+			$use_defaults = true;
+			
+			bbppt_debug( 'Processing a topic for unattended post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
+			bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );
 			
 		}
 
@@ -265,8 +292,8 @@ class BBP_PostTopics {
 				return;
 			}
 
-			$topic_slug		= isset($bbppt_options['slug']) ? $bbppt_options['slug'] : '' ;
-			$topic_forum	= isset($bbppt_options['forum_id']) ? (int)$bbppt_options['forum_id'] : 0 ;
+			$topic_slug		= isset( $bbppt_options['slug'] ) ? $bbppt_options['slug'] : '' ;
+			$topic_forum	= isset( $bbppt_options['forum_id'] ) ? (int)$bbppt_options['forum_id'] : 0 ;
 			
 			if( ! $use_defaults ) {
 				
@@ -281,15 +308,15 @@ class BBP_PostTopics {
 				
 				/** if user has selected an existing topic */
 				
-				if(is_numeric($topic_slug)) {
+				if( is_numeric( $topic_slug ) ) {
 					$topic = bbp_get_topic( (int)$topic_slug );
 				} else {
 					$topic = bbppt_get_topic_by_slug( $topic_slug );
 				}
 				
-				if($topic == null) {
+				if( $topic == null ) {
 					// return an error of some kind
-					wp_die(__('There was an error with your selected topic.','bbpress-post-topics'),__('Error Locating bbPress Topic','bbpress-post-topics'));
+					wp_die( __( 'There was an error with your selected topic.', 'bbpress-post-topics' ), __( 'Error Locating bbPress Topic', 'bbpress-post-topics' ) );
 				} else {
 					$topic_ID = $topic->ID;
 					update_post_meta( $post_ID, 'use_bbpress_discussion_topic', true );
@@ -299,7 +326,7 @@ class BBP_PostTopics {
 					if( $bbppt_options['copy_tags'] ) {
 						$post_tags = wp_get_post_tags( $post_ID );
 						$post_tags = array_map( create_function( '$term', 'return $term->name;' ), $post_tags );
-						wp_set_post_terms( $topic_ID, join(',',$post_tags), bbp_get_topic_tag_tax_id(), true );
+						wp_set_post_terms( $topic_ID, join( ',', $post_tags ), bbp_get_topic_tag_tax_id(), true );
 						update_post_meta( $post_ID, 'bbpress_discussion_tags_copied', time() );
 					}
 					
@@ -336,7 +363,7 @@ class BBP_PostTopics {
 					if( $bbppt_options['copy_tags'] ) {
 						$post_tags = wp_get_post_tags( $post_ID );
 						$post_tags = array_map( create_function( '$term', 'return $term->name;' ), $post_tags );
-						wp_set_post_terms( $topic_ID, join(',',$post_tags), bbp_get_topic_tag_tax_id(), false );
+						wp_set_post_terms( $topic_ID, join( ',', $post_tags ), bbp_get_topic_tag_tax_id(), false );
 						update_post_meta( $post_ID, 'bbpress_discussion_tags_copied', time() );
 					}
 					
@@ -363,6 +390,8 @@ class BBP_PostTopics {
 			delete_post_meta( $post_ID, 'bbpress_discussion_use_defaults' );
 			delete_post_meta( $post_ID, 'bbpress_discussion_display_format' );
 			delete_post_meta( $post_ID, 'bbpress_discussion_display_extras' );
+			delete_post_meta( $post_ID, 'bbpress_discussion_tags_copied' );
+			delete_post_meta( $post_ID, 'bbpress_discussion_comments_copied' );
 		}
 		
 		$this->delete_draft_settings( $post_ID );
@@ -557,7 +586,7 @@ class BBP_PostTopics {
 		<label for="bbpress_discussion_defaults_enabled"><?php printf(__('Create a new bbPress topic in %s %s for new posts','bbpress-post-topics'), '</label>', $forum_select_string); ?> 
 
 		<?php if($ex_options['enabled'] == 'on') : ?>
-		&mdash; <a class="button" id="create_topics" href="#" title="Create a topic with these settings for all posts without topics"><?php _e('Create topics for existing posts', 'bbpress-post-topics'); ?></a>
+		&mdash; <a class="button" id="create_topics" href="#" title="<?php _e('Create topics and apply these settings to all existing posts','bbpress-post-topics') ?>"><?php _e('Apply settings to existing posts', 'bbpress-post-topics'); ?></a>
 		<?php endif; ?>
 		<br />
 
@@ -677,7 +706,7 @@ class BBP_PostTopics {
 	}
 	
 	/**
-	 * Handle retrieving topic options for posts, including default processing
+	 * Retrieve topic options for posts, including cases where defaults are used
 	 * @param int $ID ID of post
 	 * @param string $option_name Optional name of an option to filter by
 	 */
@@ -693,7 +722,7 @@ class BBP_PostTopics {
 			$defaults['display-extras'] = array();
 		}
 
-		$strings  = get_option( 'bbpress_discussion_text' );
+		$strings = get_option( 'bbpress_discussion_text' );
 		
 		$draft_settings = $this->get_draft_settings( $ID );
 		
@@ -715,7 +744,10 @@ class BBP_PostTopics {
 				'enabled'			=> get_post_meta( $ID, 'use_bbpress_discussion_topic', true ) || $defaults['enabled'],
 				'use_defaults'		=> true,
 				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
+				'slug'				=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
 				'forum_id'			=> $defaults['forum_id'],
+				'copy_tags'			=> $defaults['copy_tags'],
+				'copy_comments'		=> $defaults['copy_comments'],
 				'display'			=> $defaults['display'],
 				'display-extras'	=> $display_extras,
 				'text'				=> $strings
@@ -727,11 +759,11 @@ class BBP_PostTopics {
 
 			/** Remove legacy post meta when post is accessed */
 			if( get_post_meta( $ID, 'bbpress_discussion_hide_topic', true ) ) {
-				update_post_meta( $ID, 'bbpress_discussion_display_format', 'replies');
+				update_post_meta( $ID, 'bbpress_discussion_display_format', 'replies' );
 				delete_post_meta( $ID, 'bbpress_discussion_hide_topic' );
 				$display = 'replies';
 			} else if( ! get_post_meta( $ID, 'bbpress_discussion_display_format', true ) ) {
-				update_post_meta( $ID, 'bbpress_discussion_display_format', 'topic');
+				update_post_meta( $ID, 'bbpress_discussion_display_format', 'topic' );
 				$display = 'topic';
 			} else {
 				$display = get_post_meta( $ID, 'bbpress_discussion_display_format', true );
@@ -754,6 +786,9 @@ class BBP_PostTopics {
 				'enabled'			=> get_post_meta( $ID, 'use_bbpress_discussion_topic', true ),
 				'use_defaults'		=> false,
 				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
+				'slug'				=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
+				'copy_tags'			=> $defaults['copy_tags'],
+				'copy_comments'		=> $defaults['copy_comments'],
 				'display'			=> $display,
 				'display-extras'	=> $display_extras,
 				'text'				=> $strings
@@ -1035,15 +1070,13 @@ function bbppt_process_existing_posts() {
 			array(
 				'numberposts'	=> 1000,
 				'offset'		=> $offset,
-				'post_type'		=> apply_filters( 'bbppt_eligible_post_types', array( 'post', 'page' ) )
+				'post_type'		=> apply_filters( 'bbppt_eligible_post_types', array( 'post' ) )
 			)
 		);
 		
 		if( $posts ) {
 			foreach($posts as $post) {
-				if( ! get_post_meta( $post->ID, 'bbpress_discussion_topic_id' ) ) {
-					$bbp_post_topics->process_topic_option( $post->ID, $post );
-				}
+				$bbp_post_topics->process_topic_option( $post->ID, $post );
 			}
 			$offset += 1000;
 			
@@ -1052,6 +1085,25 @@ function bbppt_process_existing_posts() {
 	} while( $posts != null );
 	
 	return true;
+	
+}
+
+
+/**
+ * Debugging function
+ */
+function bbppt_debug( $message ) {
+
+	if( ! defined( 'WP_DEBUG') || ! WP_DEBUG )	return;
+
+	if(defined( 'WP_DEBUG_LOG') && WP_DEBUG_LOG ) {
+		$GLOBALS['wp_log']['bbpress-post-topics'][] = 'bbPress Topics for Posts: ' .  $message;
+		error_log('bbPress Topics for Posts: ' .  $message);
+	}
+
+	if( defined('WP_DEBUG_DISPLAY') && false !== WP_DEBUG_DISPLAY) {
+		echo '<div class="log">bbPress Topics for Posts: ' . $message . "</div>\n";
+	}
 	
 }
 
