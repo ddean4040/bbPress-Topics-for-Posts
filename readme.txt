@@ -3,8 +3,8 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
-Tested up to: 3.4.1
-Stable tag: 1.4
+Tested up to: 3.5-beta2
+Stable tag: 1.5
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -35,13 +35,27 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 
 == Changelog ==
 
+= 1.5 =
+* Added: Can import comments when bulk processing posts (with new default setting)
+* Added: Broad support for scheduled posts and those made by plugins
+* Added: Delete forum topics when deleting last associated post
+* Added: Template functions for integrators / theme developers
+* Added: much-needed action hooks -- more to come!
+* Added: Debug hooks for diagnosing issues when processing new topics
+* Changed: dropped ``$bbp`` for carrying topic ID to template files -- copies of ``comments-bbpress.php`` must be updated
+* Changed: Bulk processing now includes posts with topics attached (to copy tags and import comments)
+* Changed: Skip ineligible post types during bulk processing - thanks, Gawain Lynch
+* Changed: Skip pages during bulk processing (can use filter to include them)
+* Fixed: Make path to admin script MU-compatible
+* Fixed: Make topic date match post date when importing old posts (or setting post date in the interface) - thanks, casewolf
+
 = 1.4 =
 * Fixed: duplicate topics created when updating posts with a default forum set - thanks, nchiari
 * Fixed: could not access multiple pages of replies from post - thanks, oddcopter
 * Added: bulk create topics for existing posts from the Discussion settings page
 
 = 1.3 =
-* Added: support for copying existing comments to bbPress topic - thanks, javiarques!
+* Added: support for copying existing comments to bbPress topic - generously contributed by javiarques!
 * Added: support for loading template files from theme directory
 * Changed: cleaned up the Discussion meta box a bit
 * Changed: moved away from $bbp since it has been dropped in bbPress 2.1
@@ -111,6 +125,10 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.5 =
+Many fixes and new features. 
+NOTE: If you have copied the ``comments-bbpress.php`` file to your theme, read the changelog and check the new file for important changes.
 
 = 1.4 =
 Bug fix for duplicate topics, pagination issues; added bulk processing of existing posts
