@@ -3,7 +3,7 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.0
-Tested up to: 3.5-beta2
+Tested up to: 3.5.2
 Stable tag: 1.5
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
