@@ -421,7 +421,7 @@ class BBP_PostTopics {
 		);
 		
 		$new_topic_meta = array(
-			'forum_id'		=> (int)$topic_forum,
+			'forum_id'			=> (int)$topic_forum,
 			'last_active_time'	=> $post->post_date
 		);
 		
