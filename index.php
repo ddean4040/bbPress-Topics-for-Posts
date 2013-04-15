@@ -5,10 +5,10 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 1.6-testing
-Revision Date: 2/22/2013
-Requires at least: WP 3.0, bbPress 2.0
-Tested up to: WP 3.5.1 , bbPress 2.2.4
+Version: 1.7-testing
+Revision Date: 04/14/2013
+Requires at least: WP 3.1, bbPress 2.0
+Tested up to: WP 3.6-beta1 , bbPress 2.3
 Author URI: http://www.generalthreat.com/
 */
 
@@ -97,14 +97,14 @@ class BBP_PostTopics {
 				?>
 			</select><br />
 			
-			&mdash; <input type="checkbox" name="bbpress_topic[copy_tags]" id="bbpress_topic_copy_tags" <?php checked( $bbpress_topic_options['copy_tags'] ) ?> /> <label for="bbpress_topic_copy_tags"><?php _e( 'Copy post tags to new topic', 'bbpress-post-topics' ) ?></label>
+			&mdash; <input type="checkbox" name="bbpress_topic[copy_tags]" id="bbpress_topic_copy_tags" <?php checked( $bbpress_topic_options['copy_tags'], 'on' ) ?> /> <label for="bbpress_topic_copy_tags"><?php _e( 'Copy post tags to new topic', 'bbpress-post-topics' ) ?></label>
 			<?php if( $import_date = get_post_meta( $post->ID, 'bbpress_discussion_tags_copied', true ) ) :
 				printf( '( ' . __( 'last copied %s ago', 'bbpress-post-topics' ) . ' )', human_time_diff( $import_date ) );
 			endif; ?>
 			<br />
 					
 			<?php if( wp_count_comments( $post->ID )->total_comments > 0 ) : ?>
-				&mdash; <input type="checkbox" name="bbpress_topic[copy_comments]" id="bbpress_topic_copy_comments" <?php checked( $bbpress_topic_options['copy_comments'] ) ?> /> <label for="bbpress_topic_copy_comments"><?php _e( 'Copy comments to bbPress topic', 'bbpress-post-topics' ) ?></label>
+				&mdash; <input type="checkbox" name="bbpress_topic[copy_comments]" id="bbpress_topic_copy_comments" <?php checked( $bbpress_topic_options['copy_comments'], 'on' ) ?> /> <label for="bbpress_topic_copy_comments"><?php _e( 'Copy comments to bbPress topic', 'bbpress-post-topics' ) ?></label>
 				<?php if( $import_date = get_post_meta( $post->ID, 'bbpress_discussion_comments_copied', true ) ) :
 					printf( '( ' . __( 'last copied %s ago', 'bbpress-post-topics' ) . ' )', human_time_diff( $import_date ) );
 				endif; ?>
@@ -279,7 +279,7 @@ class BBP_PostTopics {
 		}
 
 		/** Only process further when the post is published */
-		if( ! in_array( $post->post_status, apply_filters( 'bbppt_eligible_post_status', array( 'publish' ) ) ) )
+		if( ! in_array( $post->post_status, apply_filters( 'bbppt_eligible_post_status', array( 'publish', 'private' ) ) ) )
 			return;
 		
 		/**
@@ -466,15 +466,15 @@ class BBP_PostTopics {
 			/** Handle posts where defaults were kept */
 			$settings = $this->get_topic_options_for_post( $post->ID );
 			
-			switch($settings['display']) {
+			switch( $settings['display'] ) {
 				case 'topic':
-			 		return bbppt_locate_template('comments-bbpress.php');
+			 		return bbppt_locate_template( 'comments-bbpress.php' );
 					break;
 				case 'xreplies':
-					add_filter( 'bbp_has_replies_query', 'bbppt_limit_replies_in_thread');
+					add_filter( 'bbp_has_replies_query', 'bbppt_limit_replies_in_thread' );
 				case 'replies':
 					add_filter( 'bbp_has_replies_query', 'bbppt_remove_topic_from_thread' );
-			 		return bbppt_locate_template('comments-bbpress.php');
+			 		return bbppt_locate_template( 'comments-bbpress.php' );
 					break;
 				case 'link':
 			 		return bbppt_locate_template( 'comments-bbpress-link.php' );
@@ -982,6 +982,7 @@ function bbppt_import_comments( $post_id, $topic_id ) {
 	
 	/** getting post comments */
 	$post_comments = get_comments( array( 'post_id' => $post_id, 'order' => 'ASC' ) );
+	$imported_comment_count = 0;
 	
 	if ( $post_comments ) {
 		foreach ( $post_comments as $post_comment ) {
@@ -1046,8 +1047,11 @@ function bbppt_import_comments( $post_id, $topic_id ) {
 			update_comment_meta( $post_comment->comment_ID, 'bbppt_imported', true );
 			
 			do_action( 'bbppt_comment_imported', $post_comment, $post_id, $topic_id );
-			
+
+			$imported_comment_count++;
 		}
+		// Update the reply count meta value to reflect imported comments
+		bbp_bump_topic_reply_count( $topic_id, $imported_comment_count - 1 );
 	}
 }
 
