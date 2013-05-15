@@ -729,6 +729,9 @@ class BBP_PostTopics {
 			/** Post has draft settings saved */
 			$options = $draft_settings;
 			
+			if( $topic_id = get_post_meta( $ID, 'bbpress_discussion_topic_id', true ) )
+				$options['topic_id'] = $topic_id;
+			
 		} else if(
 			get_post_meta( $ID, 'bbpress_discussion_use_defaults', true ) || 
 			! get_post_meta( $ID, 'bbpress_discussion_topic_id', true )
