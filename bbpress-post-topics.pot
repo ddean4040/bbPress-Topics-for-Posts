@@ -1,0 +1,199 @@
+# Copyright (C) 2013 
+# This file is distributed under the same license as the  package.
+msgid ""
+msgstr ""
+"Project-Id-Version:  \n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/bbpress-post-topics\n"
+"POT-Creation-Date: 2013-04-15 03:02:56+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2013-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: ajax.php:15
+msgid "Processing completed successfully"
+msgstr ""
+
+#: ajax.php:17
+msgid "There was an error processing your posts"
+msgstr ""
+
+#: index.php:39
+msgid ""
+"bbPress Topics for Posts has been enabled, but cannot detect your bbPress "
+"setup."
+msgstr ""
+
+#: index.php:60
+msgid ""
+"bbPress Topics for Posts has been enabled, but you have not created any "
+"forums yet."
+msgstr ""
+
+#: index.php:66
+msgid "Use a bbPress forum topic for comments on this post."
+msgstr ""
+
+#: index.php:69
+msgid "Use an existing topic:"
+msgstr ""
+
+#: index.php:69
+msgid "Topic ID or slug"
+msgstr ""
+
+#: index.php:70
+msgid "Create a new topic in forum:"
+msgstr ""
+
+#: index.php:72 index.php:559
+msgid "Select a Forum"
+msgstr ""
+
+#: index.php:82
+msgid "Copy post tags to new topic"
+msgstr ""
+
+#: index.php:84 index.php:91
+msgid "last copied %s ago"
+msgstr ""
+
+#: index.php:89
+msgid "Copy comments to bbPress topic"
+msgstr ""
+
+#: index.php:96
+msgid "Use default display settings"
+msgstr ""
+
+#: index.php:98 index.php:577
+msgid "On the post page, show:"
+msgstr ""
+
+#: index.php:102 index.php:584
+msgid "most recent"
+msgstr ""
+
+#: index.php:103 index.php:585
+msgid "oldest"
+msgstr ""
+
+#: index.php:117 index.php:597
+msgid "Entire topic"
+msgstr ""
+
+#: index.php:118 index.php:598
+msgid "Replies only"
+msgstr ""
+
+#: index.php:119 index.php:599
+msgid "Only the %s %s %s replies"
+msgstr ""
+
+#: index.php:120 index.php:600
+msgid "A link to the topic"
+msgstr ""
+
+#: index.php:271
+msgid ""
+"bbPress Topics for Posts cannot process this request because it cannot "
+"detect your bbPress setup."
+msgstr ""
+
+#: index.php:299
+msgid "There was an error with your selected topic."
+msgstr ""
+
+#: index.php:299
+msgid "Error Locating bbPress Topic"
+msgstr ""
+
+#: index.php:337
+msgid "There was an error creating a new topic."
+msgstr ""
+
+#: index.php:337
+msgid "Error Creating bbPress Topic"
+msgstr ""
+
+#: index.php:398 index.php:637
+msgid "[See the full post at: <a href=\"%s\">%s</a>]"
+msgstr ""
+
+#: index.php:526
+msgid "bbPress Topics for Posts Defaults"
+msgstr ""
+
+#: index.php:527
+msgid "bbPress Topics for Posts Strings"
+msgstr ""
+
+#: index.php:531
+msgid "Disabled - save changes or reload to enable"
+msgstr ""
+
+#: index.php:545 index.php:627
+msgid "You must install or enable bbPress to use this plugin."
+msgstr ""
+
+#: index.php:564
+msgid "Create a new bbPress topic in %s %s for new posts"
+msgstr ""
+
+#: index.php:567
+msgid "Create topics and apply these settings to all existing posts"
+msgstr ""
+
+#: index.php:567
+msgid "Apply settings to existing posts"
+msgstr ""
+
+#: index.php:572
+msgid "Copy post tags to new topics"
+msgstr ""
+
+#: index.php:575
+msgid "Copy post comments to new topics (when available)"
+msgstr ""
+
+#: index.php:639 index.php:854
+msgid "Follow this link to join the discussion"
+msgstr ""
+
+#: index.php:642
+msgid "Post title"
+msgstr ""
+
+#: index.php:643
+msgid "Post Permalink"
+msgstr ""
+
+#: index.php:644
+msgid "Post author's display name"
+msgstr ""
+
+#: index.php:645
+msgid "Post except (or a 150-character snippet)"
+msgstr ""
+
+#: index.php:646
+msgid "Full post text"
+msgstr ""
+
+#: index.php:651
+msgid "Content of topic first post:"
+msgstr ""
+
+#: index.php:655
+msgid "Use the substitutions below:"
+msgstr ""
+
+#: index.php:661
+msgid "Link text (when showing only a link to the topic):"
+msgstr ""
+
+#: index.php:663
+msgid "Use %s to include the post name"
+msgstr ""
