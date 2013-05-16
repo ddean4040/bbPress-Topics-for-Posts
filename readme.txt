@@ -3,8 +3,8 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.1
-Tested up to: 3.6-beta1
-Stable tag: 1.6
+Tested up to: 3.6-beta3
+Stable tag: 1.7
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -34,6 +34,11 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 1. Comment bubble replaced with the number of forum posts
 
 == Changelog ==
+
+= 1.7 =
+* Fixed: multiple topics created for posts under certain circumstances - thanks, Erlend Sogge Heggen! 
+* Fixed: draft settings not properly deleted when publishing posts
+* Changed: silenced a bunch of warnings for a cleaner debug experience
 
 = 1.6 =
 * Changed: Will now create topics for posts marked 'Private' when selected - thanks, dhtc
@@ -132,6 +137,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.7 =
+Bug fix for duplicate topics when publishing a draft
 
 = 1.6 =
 Bug fixes for topic dates, comment counts, and settings display
