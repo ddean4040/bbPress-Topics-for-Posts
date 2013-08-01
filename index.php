@@ -230,6 +230,7 @@ class BBP_PostTopics {
 			} else {
 				
 				$create_topic = false;
+				$bbppt_options = array();
 				bbppt_debug( 'NOT creating a topic for regular post ' . $post_ID );
 				
 			}
@@ -755,7 +756,7 @@ class BBP_PostTopics {
 			$display_extras = maybe_unserialize( $defaults['display-extras'] );
 			
 			$options = array(
-				'enabled'			=> get_post_meta( $ID, 'use_bbpress_discussion_topic', true ) || $defaults['enabled'],
+				'enabled'			=> get_post_meta( $ID, 'use_bbpress_discussion_topic', true ) || ! empty( $defaults['enabled'] ),
 				'use_defaults'		=> true,
 				'topic_id'			=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
 				'slug'				=> get_post_meta( $ID, 'bbpress_discussion_topic_id', true ),
