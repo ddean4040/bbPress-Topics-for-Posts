@@ -5,10 +5,10 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 1.7-testing
-Revision Date: 04/14/2013
+Version: 1.8-testing
+Revision Date: 08/01/2013
 Requires at least: WP 3.1, bbPress 2.0
-Tested up to: WP 3.6-beta3 , bbPress 2.3.2
+Tested up to: WP 3.6 , bbPress 2.3.2
 Author URI: http://www.generalthreat.com/
 */
 
@@ -218,7 +218,7 @@ class BBP_PostTopics {
  			 * Check the POST for settings
 			 */
 			
-			if( $_POST['bbpress_topic']['enabled'] == 'open' ) {
+			if( ! empty( $_POST['bbpress_topic']['enabled'] ) ) {
 				
 				$bbppt_options = $_POST['bbpress_topic'];
 				$create_topic = true;
@@ -738,10 +738,15 @@ class BBP_PostTopics {
 		
 		$draft_settings = $this->get_draft_settings( $ID );
 		
-		if( $draft_settings && $draft_settings['enabled'] && ! $draft_settings['use_defaults'] ) {
+		if( $draft_settings && $draft_settings['enabled'] ) {
 			
 			/** Post has draft settings saved */
 			$options = $draft_settings;
+			
+			/** Check whether draft settings specify default display */
+			if( $draft_settings['use_defaults'] ) {
+				$options = array_merge( $defaults, $options );
+			}
 			
 			if( $topic_id = get_post_meta( $ID, 'bbpress_discussion_topic_id', true ) )
 				$options['topic_id'] = $topic_id;
@@ -836,8 +841,13 @@ class BBP_PostTopics {
 		$post = get_post( $post );
 		if( ! is_object( $post ) )	return false;
 		
+		if( ! array_key_exists( 'enabled', $settings ) )
+			$settings['enabled'] = false;
+		
 		if( ! array_key_exists( 'use_defaults', $settings ) )
 			$settings['use_defaults'] = false;
+		else
+			$settings['use_defaults'] = true;
 		
 		if( ! array_key_exists( 'topic_id', $settings ) )
 			$settings['topic_id'] = false;

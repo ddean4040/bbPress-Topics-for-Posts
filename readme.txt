@@ -3,7 +3,7 @@ Contributors: ddean
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDCMJRYPKNN&lc=US&item_name=bbPress%20Post%20Topics&currency_code=USD
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.1
-Tested up to: 3.6-beta3
+Tested up to: 3.6
 Stable tag: 1.7
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
@@ -34,6 +34,11 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 1. Comment bubble replaced with the number of forum posts
 
 == Changelog ==
+
+= 1.8 =
+* Fixed: post titles appeared blank when saving under certain circumstances - thanks, Keiser Media and nosignal
+* Fixed: saved draft settings were not reflected when editing the post under certain circumstances - thanks, RobJustice777
+* Fixed: a couple other PHP warnings
 
 = 1.7 =
 * Fixed: multiple topics created for posts under certain circumstances - thanks, Erlend Sogge Heggen! 
