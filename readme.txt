@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDC
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.1
 Tested up to: 3.6
-Stable tag: 1.7
+Stable tag: 1.8
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -36,14 +36,15 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 == Changelog ==
 
 = 1.8 =
-* Fixed: post titles appeared blank when saving under certain circumstances - thanks, Keiser Media and nosignal
-* Fixed: saved draft settings were not reflected when editing the post under certain circumstances - thanks, RobJustice777
-* Fixed: a couple other PHP warnings
+* Added: Anchor for "Respond" / "Leave a reply" links in post listings
+* Fixed: Post titles appeared blank when saving under certain circumstances - thanks, Keiser Media and nosignal
+* Fixed: Saved draft settings were not reflected when editing the post under certain circumstances - thanks, RobJustice777
+* Fixed: A couple other PHP warnings
 
 = 1.7 =
-* Fixed: multiple topics created for posts under certain circumstances - thanks, Erlend Sogge Heggen! 
-* Fixed: draft settings not properly deleted when publishing posts
-* Changed: silenced a bunch of warnings for a cleaner debug experience
+* Fixed: Multiple topics created for posts under certain circumstances - thanks, Erlend Sogge Heggen! 
+* Fixed: Draft settings not properly deleted when publishing posts
+* Changed: Silenced a bunch of warnings for a cleaner debug experience
 
 = 1.6 =
 * Changed: Will now create topics for posts marked 'Private' when selected - thanks, dhtc
@@ -142,6 +143,9 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.8 =
+Bug fix for disappearing draft settings and post titles
 
 = 1.7 =
 Bug fix for duplicate topics when publishing a draft

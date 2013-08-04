@@ -5,6 +5,7 @@
  */
 ?>
 <div id="comments">
+	<a name="respond"></a>
 	<?php 
 		global $post, $bbp_post_topics;
 		$settings = $bbp_post_topics->get_topic_options_for_post( $post->ID );

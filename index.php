@@ -5,8 +5,8 @@ Plugin Name: bbPress Topics for Posts
 Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
-Version: 1.8-testing
-Revision Date: 08/01/2013
+Version: 1.9-testing
+Revision Date: 08/04/2013
 Requires at least: WP 3.1, bbPress 2.0
 Tested up to: WP 3.6 , bbPress 2.3.2
 Author URI: http://www.generalthreat.com/
@@ -569,23 +569,23 @@ class BBP_PostTopics {
 		}
 		
 		wp_enqueue_script('bbppt-admin-script');
-		
-		$ex_options = get_option( 'bbpress_discussion_defaults' );
-		
-		if( empty( $ex_options ) ) {
-		    $ex_options = array(
-			'enabled'       => false,
-			'forum_id'      => false,
-			'copy_tags'     => false,
-			'copy_comments' => false,
-			'display'       => false,
+
+		$ex_options = array(
+			'enabled'        => false,
+			'forum_id'       => false,
+			'copy_tags'      => false,
+			'copy_comments'  => false,
+			'display'        => false,
 			'display-extras' => false
-		    );
-		}
+		);
+		
+		$ex_options = array_merge( $ex_options, get_option( 'bbpress_discussion_defaults' ) );
+		
 		$forum_dropdown_options = array(
-			'selected'		=> $ex_options['forum_id'],
+			'selected'      => $ex_options['forum_id'],
 			'options_only'	=> true
 		);
+		
 		$forum_select_string = '<select name="bbpress_discussion_defaults[forum_id]" id="bbpress_discussion_defaults_forum_id">';
 		$forum_select_string .= '<option value="0">' . __('Select a Forum','bbpress-post-topics') . '</option>';
 		$forum_select_string .= bbp_get_dropdown( $forum_dropdown_options ); 

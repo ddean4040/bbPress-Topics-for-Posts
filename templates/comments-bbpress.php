@@ -5,6 +5,7 @@
  */
 ?>
 <div id="comments">
+	<a name="respond"></a>
 	
 	<?php do_action( 'bbp_template_before_single_topic' ); ?>
 	<?php 
