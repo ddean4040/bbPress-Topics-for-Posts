@@ -549,23 +549,23 @@ class BBP_PostTopics {
 		}
 		
 		wp_enqueue_script('bbppt-admin-script');
-		
-		$ex_options = get_option( 'bbpress_discussion_defaults' );
-		
-		if( empty( $ex_options ) ) {
-		    $ex_options = array(
-			'enabled'       => false,
-			'forum_id'      => false,
-			'copy_tags'     => false,
-			'copy_comments' => false,
-			'display'       => false,
+
+		$ex_options = array(
+			'enabled'        => false,
+			'forum_id'       => false,
+			'copy_tags'      => false,
+			'copy_comments'  => false,
+			'display'        => false,
 			'display-extras' => false
-		    );
-		}
+		);
+		
+		$ex_options = array_merge( $ex_options, get_option( 'bbpress_discussion_defaults' ) );
+		
 		$forum_dropdown_options = array(
-			'selected'		=> $ex_options['forum_id'],
+			'selected'      => $ex_options['forum_id'],
 			'options_only'	=> true
 		);
+		
 		$forum_select_string = '<select name="bbpress_discussion_defaults[forum_id]" id="bbpress_discussion_defaults_forum_id">';
 		$forum_select_string .= '<option value="0">' . __('Select a Forum','bbpress-post-topics') . '</option>';
 		$forum_select_string .= bbp_get_dropdown( $forum_dropdown_options ); 
