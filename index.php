@@ -241,7 +241,7 @@ class BBP_PostTopics {
 			 */
 			
 			$bbppt_options = $this->get_topic_options_for_post( $post_ID );
-			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] );
+			$create_topic = ( ! empty( $bbppt_options['enabled'] ) );
 			$use_defaults = ( isset( $bbppt_options['use_defaults'] ) && $bbppt_options['use_defaults'] );
 			
 			bbppt_debug( 'Processing topic for existing post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
@@ -253,7 +253,7 @@ class BBP_PostTopics {
 			 */
 		
 			$bbppt_options = $this->get_draft_settings( $post );
-			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'open' );
+			$create_topic = ( ! empty( $bbppt_options['enabled'] ) );
 			$use_defaults = ( isset( $bbppt_options['use_defaults'] ) && $bbppt_options['use_defaults'] );
 			
 			bbppt_debug( 'Processing a topic for draft post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
@@ -265,8 +265,9 @@ class BBP_PostTopics {
 			 */
 			
 			$bbppt_options = get_option( 'bbpress_discussion_defaults' );
-			$create_topic = ( isset($bbppt_options['enabled']) && $bbppt_options['enabled'] == 'on' );
+			$create_topic = ( ! empty( $bbppt_options['enabled'] ) );
 			$use_defaults = true;
+			$bbppt_options['use_defaults'] = $use_defaults;
 			
 			bbppt_debug( 'Processing a topic for unattended post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
 			bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );
@@ -579,7 +580,7 @@ class BBP_PostTopics {
 			'display-extras' => false
 		);
 		
-		$ex_options = array_merge( $ex_options, get_option( 'bbpress_discussion_defaults' ) );
+		$ex_options = wp_parse_args( get_option( 'bbpress_discussion_defaults' ), $ex_options );
 		
 		$forum_dropdown_options = array(
 			'selected'      => $ex_options['forum_id'],
