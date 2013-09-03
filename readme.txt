@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6BKDC
 Tags: bbpress, topic, forum, post, page, comments, discussion
 Requires at least: 3.1
 Tested up to: 3.6
-Stable tag: 1.8
+Stable tag: 1.8.1
 
 Replace the comments on your WordPress blog posts with topics from an integrated bbPress install
 
@@ -34,6 +34,11 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 1. Comment bubble replaced with the number of forum posts
 
 == Changelog ==
+
+= 1.8.1 =
+* Fixed: Posts with draft settings did not have topics created under certain circumstances - thanks, Opinynated
+* Fixed: PHP notice when editing global settings for the first time
+* Changed: Updated default templates to look better with twentythirteen theme
 
 = 1.8 =
 * Added: Anchor for "Respond" / "Leave a reply" links in post listings
@@ -143,6 +148,10 @@ See <a href="http://www.simplethemes.com/tutorials/help/disable-comments-in-word
 Initial Release
 
 == Upgrade Notice ==
+
+= 1.8.1 =
+Bug fix for posts created with front-end editors and theme improvements
+NOTE: If you have copied the ``comments-bbpress.php`` file to your theme, read the changelog and check the new file for important changes.
 
 = 1.8 =
 Bug fix for disappearing draft settings and post titles

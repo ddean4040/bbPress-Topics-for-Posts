@@ -6,9 +6,9 @@ Plugin URI: http://www.generalthreat.com/projects/bbpress-post-topics
 Description: Give authors the option to replace the comments on a WordPress blog post with a topic from an integrated bbPress install
 Author: David Dean
 Version: 1.9-testing
-Revision Date: 08/04/2013
+Revision Date: 09/02/2013
 Requires at least: WP 3.1, bbPress 2.0
-Tested up to: WP 3.6 , bbPress 2.3.2
+Tested up to: WP 3.6 , bbPress 2.4
 Author URI: http://www.generalthreat.com/
 */
 
@@ -242,7 +242,7 @@ class BBP_PostTopics {
 			
 			$bbppt_options = $this->get_topic_options_for_post( $post_ID );
 			$create_topic = ( ! empty( $bbppt_options['enabled'] ) );
-			$use_defaults = ( isset( $bbppt_options['use_defaults'] ) && $bbppt_options['use_defaults'] );
+			$use_defaults = ( ! empty( $bbppt_options['use_defaults'] ) );
 			
 			bbppt_debug( 'Processing topic for existing post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
 			bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );
@@ -254,7 +254,7 @@ class BBP_PostTopics {
 		
 			$bbppt_options = $this->get_draft_settings( $post );
 			$create_topic = ( ! empty( $bbppt_options['enabled'] ) );
-			$use_defaults = ( isset( $bbppt_options['use_defaults'] ) && $bbppt_options['use_defaults'] );
+			$use_defaults = ( ! empty( $bbppt_options['use_defaults'] ) );
 			
 			bbppt_debug( 'Processing a topic for draft post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
 			bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );

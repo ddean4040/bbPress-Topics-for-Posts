@@ -4,27 +4,27 @@
  *
  */
 ?>
-<div id="comments">
+<div id="comments" class="comment-respond">
 	<a name="respond"></a>
-	
-	<?php do_action( 'bbp_template_before_single_topic' ); ?>
-	<?php 
-		global $bbp, $bbp_post_topics;
-		
-		/** Fix pagination for replies */
-		add_filter( 'bbp_replies_pagination', create_function( '$args', '$args["base"] = add_query_arg( "paged", "%#%" ); return $args;') );
-		
-		if( is_object($bbp) && isset($bbp->shortcodes) ) {
-			/** bbPress 2.0.x */
-			echo $bbp->shortcodes->display_topic(array('id'=>$bbp_post_topics->topic_ID));
-		} else {
-			/** bbPress 2.1.x */
-			echo bbpress()->shortcodes->display_topic(array('id'=>$bbp_post_topics->topic_ID));
-		}
-		
-	?>
-	<?php do_action( 'bbp_template_after_single_topic' ); ?>
-
+	<div class="entry-content">
+		<?php do_action( 'bbp_template_before_single_topic' ); ?>
+		<?php 
+			global $bbp, $bbp_post_topics;
+			
+			/** Fix pagination for replies */
+			add_filter( 'bbp_replies_pagination', create_function( '$args', '$args["base"] = add_query_arg( "paged", "%#%" ); return $args;') );
+			
+			if( is_object($bbp) && isset($bbp->shortcodes) ) {
+				/** bbPress 2.0.x */
+				echo $bbp->shortcodes->display_topic(array('id'=>$bbp_post_topics->topic_ID));
+			} else {
+				/** bbPress 2.1.x */
+				echo bbpress()->shortcodes->display_topic(array('id'=>$bbp_post_topics->topic_ID));
+			}
+			
+		?>
+		<?php do_action( 'bbp_template_after_single_topic' ); ?>
+	</div><!-- .entry-content -->
 </div><!-- #comments -->
 <?php
 	/** Hide pagination and form when we are only displaying a certain number of posts */
