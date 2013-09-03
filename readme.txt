@@ -149,6 +149,10 @@ Initial Release
 
 == Upgrade Notice ==
 
+= 1.8.1 =
+Bug fix for posts created with front-end editors and theme improvements
+NOTE: If you have copied the ``comments-bbpress.php`` file to your theme, read the changelog and check the new file for important changes.
+
 = 1.8 =
 Bug fix for disappearing draft settings and post titles
 
