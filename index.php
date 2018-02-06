@@ -268,6 +268,8 @@ class BBP_PostTopics {
 			$create_topic = ( ! empty( $bbppt_options['enabled'] ) );
 			$use_defaults = true;
 			$bbppt_options['use_defaults'] = $use_defaults;
+
+			$bbppt_options['forum_id'] = apply_filters( 'bbpt_override_default_topic_forum', $bbppt_options['forum_id'], get_post_type( $post_ID ) );
 			
 			bbppt_debug( 'Processing a topic for unattended post ' . $post_ID . ' with the following settings: ' . print_r( $bbppt_options, true ) );
 			bbppt_debug( 'Creating topic?: ' . $create_topic . '; using defaults?: ' . $use_defaults );
@@ -773,6 +775,7 @@ class BBP_PostTopics {
 				'display-extras'	=> $display_extras,
 				'text'				=> $strings
 			);
+			$options['forum_id'] = apply_filters( 'bbpt_override_default_topic_forum', $options['forum_id'], get_post_type( $ID ) );
 			
 		} else {
 			
